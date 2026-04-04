@@ -11,6 +11,8 @@ import { MemoryWriteTool } from "../tools/MemoryWriteTool/tool";
 import { OrchestratorTool } from "../tools/OrchestratorTool/tool";
 import { RecallTool } from "../tools/RecallTool/tool";
 import { ThinkTool } from "../tools/ThinkTool/tool";
+import { WebFetchTool } from "../tools/WebFetchTool/tool";
+import { WebSearchTool } from "../tools/WebSearchTool/tool";
 
 export const agentTools = {
   FileReadTool,
@@ -25,8 +27,17 @@ export const agentTools = {
   ThinkTool,
   GlobTool,
   RecallTool,
+  WebFetchTool,
+  WebSearchTool,
 };
 
-export const chatTools = { RecallTool, FileReadTool, GrepTool, MemoryReadTool };
+export const chatTools = {
+  RecallTool,
+  FileReadTool,
+  GrepTool,
+  MemoryReadTool,
+  WebFetchTool,
+  WebSearchTool,
+};
 
 export const planTools = { OrchestratorTool };
