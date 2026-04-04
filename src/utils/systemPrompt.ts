@@ -42,11 +42,17 @@ const TOOL_RULES = `
 - Use GrepTool with the include parameter to narrow by file type (e.g. "*.ts", "*.js").
 
 # Bash
-- Use BashTool only for: running commands, creating directories, checking if files/dirs exist, running scripts.
+- Use BashTool only for: running commands, creating directories, checking if files/dirs exist, running scripts, git commands.
 - Never use BashTool to search file contents — use GrepTool instead.
 - Never use banned commands: curl, wget, nc, telnet, etc.
 - Chain commands with && or ;, never newlines.
 - Do not install packages unless explicitly asked.
+
+# Git
+- When asked for a commit message, ALWAYS run git status and git diff first before generating one.
+- Never generate a commit message without reading the actual changes first.
+- Use BashTool for all git commands — there is no GitTool.
+- Use conventional commits: feat, fix, chore, refactor, docs, test, style.
 
 # Web
 - Use WebSearchTool when the user asks about current info, news, docs, or anything requiring live data.
@@ -151,7 +157,7 @@ Examples: "what does this function do", "explain X", "why is this broken", "hey"
 The agent has full filesystem and shell access. It can read, write, and edit files, run commands, install packages, and delegate subtasks to sub-agents.
 Available tools: FileReadTool, FileWriteTool, FileEditTool, BashTool, GrepTool, AgentTool, ThinkTool, GlobTool, RecallTool, MemoryReadTool, MemoryWriteTool, MemoryEditTool, WebSearchTool, WebFetchTool.
 Use this for: any task that requires making changes — editing code, creating files, running scripts, fixing bugs, refactoring.
-Examples: "add a dark mode", "fix this bug", "create a new component", "refactor X", "run the tests"
+Examples: "add a dark mode", "fix this bug", "create a new component", "refactor X", "run the tests", "give me a commit message"
 
 ## plan
 The agent calls OrchestratorTool which spins up multiple parallel sub-agents with topological dependency resolution.
