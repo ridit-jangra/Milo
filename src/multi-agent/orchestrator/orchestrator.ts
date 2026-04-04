@@ -6,7 +6,7 @@ import { safeParseJSON } from "../../utils/json";
 
 export class Orchestrator {
   private async create_plan(prompt: string) {
-    const text =
+    const { text } =
       await chatWithModel(`Break this task into subtasks. Respond with ONLY valid JSON, no markdown, no explanation:
   {
     "tasks": [
@@ -22,7 +22,6 @@ export class Orchestrator {
 
     const clean = text.replace(/```json|```/g, "").trim();
     const plan = taskSchema.parse(safeParseJSON(clean));
-
     return plan;
   }
 
@@ -63,7 +62,7 @@ export class Orchestrator {
       .map(([id, result]) => `[${id}]: ${result}`)
       .join("\n");
 
-    const connection = await spawnAgent(
+    const { result } = await spawnAgent(
       `Manifest:\n${manifestSummary}\n\nWire everything together — fix imports, ensure consistency, resolve integration issues.`,
       "connector",
     );
@@ -72,7 +71,7 @@ export class Orchestrator {
       success: true,
       plan: plan.tasks.map((t) => t.id),
       result: results,
-      connection,
+      connection: result,
       summary: `Completed ${plan.tasks.length} subtasks and connected all files.`,
     };
   }
