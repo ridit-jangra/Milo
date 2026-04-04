@@ -3,8 +3,9 @@ import clear from "./commands/clear";
 import help from "./commands/help";
 import mode from "./commands/mode";
 import init from "./commands/init";
+import genz from "./commands/genz";
 
-const COMMANDS: Command[] = [clear, help, mode, init];
+const COMMANDS: Command[] = [clear, help, mode, init, genz];
 
 export function getCommands(): Command[] {
   return COMMANDS.filter((c) => c.isEnabled);
