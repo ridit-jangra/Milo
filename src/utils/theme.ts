@@ -6,7 +6,7 @@ import type { Theme } from "../types";
 const darkTheme: Theme = {
   primary: "#D97757",
   secondary: "#b1b9f9",
-  border: "#fd5db1",
+  border: "#D97757",
   secondaryBorder: "#888",
   text: "#fff",
   secondaryText: "#999",
@@ -25,7 +25,7 @@ const darkTheme: Theme = {
 const lightTheme: Theme = {
   primary: "#D97757",
   secondary: "#5769f7",
-  border: "#ff0087",
+  border: "#D97757",
   secondaryBorder: "#999",
   text: "#000",
   secondaryText: "#666",
@@ -44,7 +44,7 @@ const lightTheme: Theme = {
 const darkDaltonizedTheme: Theme = {
   primary: "#ff9933",
   secondary: "#99ccff",
-  border: "#3399ff",
+  border: "#ff9933",
   secondaryBorder: "#888",
   text: "#fff",
   secondaryText: "#999",
@@ -63,7 +63,7 @@ const darkDaltonizedTheme: Theme = {
 const lightDaltonizedTheme: Theme = {
   primary: "#ff9933",
   secondary: "#3366ff",
-  border: "#0066cc",
+  border: "#ff9933",
   secondaryBorder: "#999",
   text: "#000",
   secondaryText: "#666",

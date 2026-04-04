@@ -6,17 +6,19 @@ import { useTerminalSize } from "../../hooks/useTerminalSize";
 type Props = {
   text: string;
   addMargin?: boolean;
+  isFirst?: boolean;
 };
 
 export function UserMessage({
   text,
   addMargin = false,
+  isFirst = false,
 }: Props): React.ReactNode {
   const { columns } = useTerminalSize();
   if (!text) return null;
 
   return (
-    <Box flexDirection="row" marginTop={addMargin ? 1 : 0} width="100%">
+    <Box flexDirection="row" marginTop={isFirst ? 0 : 1} width="100%">
       <Box minWidth={2} width={2}>
         <Text color={getTheme().secondaryText}>{">"}</Text>
       </Box>

@@ -3,6 +3,7 @@ import type { Token } from "marked";
 import chalk from "chalk";
 import { EOL } from "os";
 import { highlight, supportsLanguage } from "cli-highlight";
+import { cornerTopLeft, cornerBottomLeft, lineVertical, line } from "../icons";
 
 const STRIPPED_TAGS = [
   "commit_analysis",
@@ -24,6 +25,21 @@ export function applyMarkdown(content: string): string {
     .trim();
 }
 
+function formatCodeBlock(text: string, lang?: string): string {
+  const highlighted =
+    lang && supportsLanguage(lang)
+      ? highlight(text, { language: lang })
+      : highlight(text, { language: "markdown" });
+
+  const lines = highlighted.split("\n");
+  const top =
+    chalk.dim(cornerTopLeft + line) + (lang ? chalk.dim(` ${lang}`) : "");
+  const body = lines.map((l) => chalk.dim(lineVertical + " ") + l).join(EOL);
+  const bottom = chalk.dim(cornerBottomLeft + line);
+
+  return top + EOL + body + EOL + bottom + EOL;
+}
+
 function format(
   token: Token,
   listDepth = 0,
@@ -36,13 +52,8 @@ function format(
         (token.tokens ?? []).map((_) => format(_)).join(""),
       );
     case "code":
-      if (token.lang && supportsLanguage(token.lang)) {
-        return highlight(token.text, { language: token.lang }) + EOL;
-      } else {
-        return highlight(token.text, { language: "markdown" }) + EOL;
-      }
+      return formatCodeBlock(token.text, token.lang);
     case "codespan":
-      // inline code
       return chalk.blue(token.text);
     case "em":
       return chalk.italic((token.tokens ?? []).map((_) => format(_)).join(""));
@@ -50,7 +61,7 @@ function format(
       return chalk.bold((token.tokens ?? []).map((_) => format(_)).join(""));
     case "heading":
       switch (token.depth) {
-        case 1: // h1
+        case 1:
           return (
             chalk.bold.italic.underline(
               (token.tokens ?? []).map((_) => format(_)).join(""),
@@ -58,13 +69,13 @@ function format(
             EOL +
             EOL
           );
-        case 2: // h2
+        case 2:
           return (
             chalk.bold((token.tokens ?? []).map((_) => format(_)).join("")) +
             EOL +
             EOL
           );
-        default: // h3+
+        default:
           return (
             chalk.bold.dim(
               (token.tokens ?? []).map((_) => format(_)).join(""),
@@ -108,8 +119,30 @@ function format(
       } else {
         return token.text;
       }
+    case "table": {
+      const headers = (token.header as any[]).map((h: any) =>
+        ((h.tokens ?? []) as Token[]).map((_) => format(_)).join(""),
+      );
+      const rows = (token.rows as any[][]).map((row: any[]) =>
+        row.map((cell: any) =>
+          ((cell.tokens ?? []) as Token[]).map((_) => format(_)).join(""),
+        ),
+      );
+
+      const colWidths = headers.map((h: string, i: number) =>
+        Math.max(h.length, ...rows.map((r: string[]) => (r[i] ?? "").length)),
+      );
+
+      const formatRow = (cells: string[]) =>
+        cells.map((c, i) => c.padEnd(colWidths[i] ?? 0)).join("  ");
+
+      const header = chalk.bold(formatRow(headers));
+      const separator = colWidths.map((w: number) => "─".repeat(w)).join("  ");
+      const body = rows.map((r: string[]) => formatRow(r)).join(EOL);
+
+      return header + EOL + chalk.dim(separator) + EOL + body + EOL;
+    }
   }
-  // TODO: tables
   return "";
 }
 
@@ -216,9 +249,9 @@ function getListNumber(listDepth: number, orderedListNumber: number): string {
     case 1:
       return orderedListNumber.toString();
     case 2:
-      return DEPTH_1_LIST_NUMBERS[orderedListNumber - 1]!; // TODO: don't hard code the list
+      return DEPTH_1_LIST_NUMBERS[orderedListNumber - 1]!;
     case 3:
-      return DEPTH_2_LIST_NUMBERS[orderedListNumber - 1]!; // TODO: don't hard code the list
+      return DEPTH_2_LIST_NUMBERS[orderedListNumber - 1]!;
     default:
       return orderedListNumber.toString();
   }

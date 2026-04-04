@@ -23,3 +23,7 @@ export const arrowUp = "↑";
 export const arrowDown = "↓";
 export const arrowLeft = "←";
 export const arrowRight = "→";
+export const cornerTopLeft = "╭";
+export const cornerBottomLeft = "╰";
+export const cornerTopRight = "╮";
+export const cornerBottomRight = "╯";

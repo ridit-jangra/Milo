@@ -4,6 +4,7 @@ import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import { getTheme } from "../utils/theme";
 import { sample } from "lodash-es";
+import { cornerBottomLeft, line } from "../icons";
 
 const MESSAGES = [
   "Marinating 🍖",
@@ -41,9 +42,23 @@ const MESSAGES = [
   "Ate different 🍽️",
 ];
 
+const TIPS = [
+  "use agent mode for file tasks",
+  "use plan mode for large multi-step tasks",
+  "esc to interrupt at any time",
+  "vein remembers your preferences",
+  "use RecallTool to search past sessions",
+  "vein reads VEIN.md for project context",
+  "chain tasks in one prompt for best results",
+  "vein can run bash commands on your behalf",
+  "use memory to persist facts across sessions",
+  "the more context you give, the better the output",
+];
+
 export function Spinner(): React.ReactNode {
   const [elapsedTime, setElapsedTime] = useState(0);
   const message = useRef(sample(MESSAGES));
+  const tip = useRef(sample(TIPS));
   const startTime = useRef(Date.now());
 
   useEffect(() => {
@@ -54,16 +69,24 @@ export function Spinner(): React.ReactNode {
   }, []);
 
   return (
-    <Box flexDirection="row" marginTop={1}>
-      <Box flexWrap="nowrap" height={1} width={2}>
-        <Text color={getTheme().primary}>
-          <InkSpinner type="star" />
+    <Box flexDirection="column">
+      <Box flexDirection="row">
+        <Box flexWrap="nowrap" height={1} width={2}>
+          <Text color={getTheme().primary}>
+            <InkSpinner type="star" />
+          </Text>
+        </Box>
+        <Text color={getTheme().primary}> {message.current}… </Text>
+        <Text color={getTheme().secondaryText}>
+          ({elapsedTime}s · <Text bold>esc</Text> to interrupt)
         </Text>
       </Box>
-      <Text color={getTheme().primary}> {message.current}… </Text>
-      <Text color={getTheme().secondaryText}>
-        ({elapsedTime}s · <Text bold>esc</Text> to interrupt)
-      </Text>
+      <Box flexDirection="row" marginLeft={1}>
+        <Text color={getTheme().secondaryText} dimColor>
+          {cornerBottomLeft}
+          {line} tip: {tip.current}
+        </Text>
+      </Box>
     </Box>
   );
 }

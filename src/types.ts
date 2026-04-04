@@ -11,6 +11,7 @@ export type ChatMessage =
       id: string;
       type: "tool_result";
       toolName: string;
+      input: unknown;
       output: unknown;
       success: boolean;
     };
@@ -35,11 +36,13 @@ export interface Theme {
 }
 
 export type StepToolCall = {
+  id: string;
   toolName: string;
   input: unknown;
 };
 
 export type StepToolResult = {
+  id: string;
   toolName: string;
   output: unknown;
 };
@@ -53,3 +56,33 @@ export type LLMOptions = {
   onToolCall?: (toolCall: StepToolCall) => void;
   onToolResult?: (toolResult: StepToolResult) => void;
 };
+
+export type CommandContext = {
+  clearMessages: () => void;
+  session: Session | undefined;
+  setSession: (session: Session | undefined) => void;
+  mode: Mode;
+  setMode: (mode: Mode) => void;
+  pushMessage: (text: string) => void;
+  abortController: AbortController;
+};
+
+type LocalCommand = {
+  type: "local";
+  call(args: string, context: CommandContext): Promise<string | void>;
+};
+
+type PromptCommand = {
+  type: "prompt";
+  progressMessage: string;
+  getPromptForCommand(args: string): Promise<string>;
+};
+
+export type Command = {
+  name: string;
+  description: string;
+  isEnabled: boolean;
+  isHidden: boolean;
+  aliases?: string[];
+  userFacingName(): string;
+} & (LocalCommand | PromptCommand);

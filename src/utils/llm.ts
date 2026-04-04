@@ -29,10 +29,15 @@ export async function runLLM({
     ...(tools ? { tools, stopWhen: stepCountIs(maxSteps) } : {}),
     onStepFinish: ({ toolCalls, toolResults }) => {
       for (const toolCall of toolCalls ?? []) {
-        onToolCall?.({ toolName: toolCall.toolName, input: toolCall.input });
+        onToolCall?.({
+          id: toolCall.toolCallId,
+          toolName: toolCall.toolName,
+          input: toolCall.input,
+        });
       }
       for (const toolResult of toolResults ?? []) {
         onToolResult?.({
+          id: toolResult.toolCallId,
           toolName: toolResult.toolName,
           output: toolResult.output,
         });
