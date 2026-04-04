@@ -35,11 +35,14 @@ const TOOL_RULES = `
 - Only use FileReadTool before editing an existing file, not before creating a new one.
 - Do not read files unrelated to the task.
 - Do not explore the filesystem unless the task requires it.
+- Never read the same file twice in one session — if you've already read it, use what you know.
+- After writing a file, do not read it back to verify — trust the write succeeded.
 
 # Searching
 - Always use GrepTool to search file contents — never use BashTool, findstr, or dir for searching.
 - Use GrepTool when you need to find where something is used, imported, or defined.
 - Use GrepTool with the include parameter to narrow by file type (e.g. "*.ts", "*.js").
+- Do not grep for things you already know from previous tool calls in this session.
 
 # Bash
 - Use BashTool only for: running commands, creating directories, checking if files/dirs exist, running scripts, git commands.
@@ -51,14 +54,20 @@ const TOOL_RULES = `
 # Git
 - When asked for a commit message, ALWAYS run git status and git diff first before generating one.
 - Never generate a commit message without reading the actual changes first.
-- Use BashTool for all git commands — there is no GitTool.
+- Use BashTool for all git commands.
 - Use conventional commits: feat, fix, chore, refactor, docs, test, style.
 
 # Web
 - Use WebSearchTool when the user asks about current info, news, docs, or anything requiring live data.
 - Use WebFetchTool to read a specific URL the user provides or a result from WebSearchTool.
 - Always prefer WebFetchTool over WebSearchTool when a URL is already known.
-- Do not use WebSearchTool for things you already know — only for live or current data.`;
+- Do not use WebSearchTool for things you already know — only for live or current data.
+
+# Efficiency
+- Plan the full sequence of tool calls before starting — avoid backtracking.
+- Batch related reads before starting writes.
+- Never repeat a tool call with the same arguments in the same session.
+- If a tool call fails, diagnose before retrying — don't retry blindly.`;
 
 const WEB_TOOL_RULES = `
 # Web
