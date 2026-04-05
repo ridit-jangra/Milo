@@ -69,7 +69,7 @@ export function Spinner(): React.ReactNode {
   }, []);
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" height={2}>
       <Box flexDirection="row">
         <Box flexWrap="nowrap" height={1} width={2}>
           <Text color={getTheme().primary}>

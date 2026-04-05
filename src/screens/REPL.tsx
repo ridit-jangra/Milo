@@ -109,6 +109,10 @@ export default function REPL(): JSX.Element {
     })),
   ];
 
+  const orchestratorHeight = isOrchestrating
+    ? orchestratedTotal.slice(-4).length + 1
+    : 0;
+
   return (
     <Box flexDirection="column" height="100%">
       <Static items={staticItems}>
@@ -120,41 +124,52 @@ export default function REPL(): JSX.Element {
         }}
       </Static>
 
-      {isOrchestrating && orchestratedTotal.length > 0 && (
-        <Box flexDirection="column" marginTop={1} marginLeft={2}>
-          <Text color={getTheme().primary}>
-            ⚡ agents{" "}
-            <Text color={getTheme().success}>{orchestratedDone.length}</Text>
-            <Text color={getTheme().secondaryText}>
-              /{orchestratedTotal.length} done
+      {/* orchestrator progress — fixed height so Ink overwrites cleanly */}
+      <Box
+        flexDirection="column"
+        marginLeft={2}
+        minHeight={orchestratorHeight}
+        marginTop={isOrchestrating ? 1 : 0}
+      >
+        {isOrchestrating && (
+          <>
+            <Text color={getTheme().primary}>
+              ⚡ agents{" "}
+              <Text color={getTheme().success}>{orchestratedDone.length}</Text>
+              <Text color={getTheme().secondaryText}>
+                /{orchestratedTotal.length} done
+              </Text>
             </Text>
-          </Text>
-          {orchestratedTotal.slice(-4).map((m) => {
-            const isDone = orchestratedMessages.some(
-              (r) => r.type === "tool_result" && r.id === m.id,
-            );
-            const task = String(
-              (m.type === "tool_call" ? (m.input as any)?.task : "") ?? "",
-            ).slice(0, columns - 12);
-            return (
-              <Box key={m.id} flexDirection="row" gap={1}>
-                <Text
-                  color={isDone ? getTheme().success : getTheme().secondaryText}
-                >
-                  {isDone ? "✔" : "◆"}
-                </Text>
-                <Text color={getTheme().secondaryText} dimColor>
-                  {task}
-                </Text>
-              </Box>
-            );
-          })}
-        </Box>
-      )}
+            {orchestratedTotal.slice(-4).map((m) => {
+              const isDone = orchestratedMessages.some(
+                (r) => r.type === "tool_result" && r.id === m.id,
+              );
+              const task = String(
+                (m.type === "tool_call" ? (m.input as any)?.task : "") ?? "",
+              ).slice(0, columns - 12);
+              return (
+                <Box key={m.id} flexDirection="row" gap={1}>
+                  <Text
+                    color={
+                      isDone ? getTheme().success : getTheme().secondaryText
+                    }
+                  >
+                    {isDone ? "✔" : "◆"}
+                  </Text>
+                  <Text color={getTheme().secondaryText} dimColor>
+                    {task}
+                  </Text>
+                </Box>
+              );
+            })}
+          </>
+        )}
+      </Box>
 
-      {loading && <Spinner />}
+      {/* spinner — always reserves 2 lines so unmount doesn't orphan */}
+      <Box minHeight={2}>{loading && <Spinner />}</Box>
 
-      <Box flexDirection="column" marginTop={1}>
+      <Box flexDirection="column">
         <Text color={getTheme().border}>{line.repeat(columns)}</Text>
         {pendingPermission ? (
           <PermissionCard permission={pendingPermission} onDecide={decide} />
@@ -175,8 +190,6 @@ export default function REPL(): JSX.Element {
             />
           </Box>
         )}
-
-        {/* bottom border */}
         <Text color={getTheme().border}>{line.repeat(columns)}</Text>
         <StatusBar model={modelId} mode={mode} />
         <CommandSuggestions query={value} selectedIndex={selectedIndex} />
