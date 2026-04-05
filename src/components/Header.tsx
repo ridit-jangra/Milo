@@ -1,8 +1,8 @@
 import { Box, Text } from "ink";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { getTheme } from "../utils/theme";
 import { useTerminalSize } from "../hooks/useTerminalSize";
-import { modelId } from "../utils/model";
+import { getModel } from "../utils/model";
 import { AsciiLogo } from "./AsciiLogo";
 import { bullet, dot, lineVertical } from "../icons";
 import { cwd } from "process";
@@ -16,9 +16,16 @@ const TIPS = [
   "ctrl+t to switch mode",
 ];
 
-export function Header(): React.ReactNode {
+export function Header(props: Record<string, unknown> = {}): React.ReactNode {
   const { columns } = useTerminalSize();
   const tip = TIPS[Math.floor(Math.random() * TIPS.length)];
+  const [modelLabel, setModelLabel] = useState("no model");
+
+  useEffect(() => {
+    getModel()
+      .then(({ modelId }) => setModelLabel(modelId))
+      .catch(() => {});
+  }, [JSON.stringify(props)]);
 
   return (
     <Box
@@ -36,7 +43,7 @@ export function Header(): React.ReactNode {
         gap={1}
       >
         <Box flexDirection="column">
-          <Text color={getTheme().secondaryText}>{modelId}</Text>
+          <Text color={getTheme().secondaryText}>{modelLabel}</Text>
         </Box>
         <Box flexDirection="column" alignItems="center" paddingX={1}>
           <Text color={getTheme().border} dimColor>

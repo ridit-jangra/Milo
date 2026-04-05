@@ -9,13 +9,13 @@ import { getTheme } from "../utils/theme";
 import { Message } from "../components/Message";
 import { pointer, line } from "../icons";
 import { Header } from "../components/Header";
+import { ProviderWizard } from "../components/ProviderWizard";
 import {
   CommandSuggestions,
   getMatchingCommands,
 } from "../components/CommandSuggestions";
 import type { ChatMessage } from "../types";
 import { StatusBar } from "../components/StatusBar";
-import { modelId } from "../utils/model";
 import { findShortcut } from "../shortcuts";
 import { PermissionCard } from "../components/permissions/PermissionCard";
 
@@ -33,6 +33,7 @@ export default function REPL(): JSX.Element {
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [lastTypedInput, setLastTypedInput] = useState("");
+  const [modelLabel, setModelLabel] = useState("no model");
   const {
     messages,
     loading,
@@ -42,7 +43,16 @@ export default function REPL(): JSX.Element {
     clearMessages,
     decide,
     pendingPermission,
+    pendingWizard,
+    closeWizard,
   } = useChat();
+
+  React.useEffect(() => {
+    import("../utils/model")
+      .then((m) => m.getModel())
+      .then(({ modelId }) => setModelLabel(modelId))
+      .catch(() => {});
+  }, [pendingWizard]);
 
   function onSubmit(input: string) {
     if (!input.trim() || loading) return;
@@ -102,6 +112,7 @@ export default function REPL(): JSX.Element {
 
   useInput(
     (input, key) => {
+      if (pendingWizard) return;
       if (key.tab && value.startsWith("/")) {
         const matches = getMatchingCommands(value);
         if (matches.length === 0) return;
@@ -219,6 +230,8 @@ export default function REPL(): JSX.Element {
         <Text color={getTheme().border}>{line.repeat(columns)}</Text>
         {pendingPermission ? (
           <PermissionCard permission={pendingPermission} onDecide={decide} />
+        ) : pendingWizard ? (
+          <ProviderWizard mode={pendingWizard} onDone={closeWizard} />
         ) : (
           <Box paddingX={1}>
             <Text color={getTheme().primary}>{pointer} </Text>
@@ -232,7 +245,7 @@ export default function REPL(): JSX.Element {
               onChangeCursorOffset={setCursorOffset}
               placeholder="ask milo anything..."
               isDimmed={loading}
-              focus={!loading && !pendingPermission}
+              focus={!loading && !pendingPermission && !pendingWizard}
               onHistoryUp={onHistoryUp}
               onHistoryDown={onHistoryDown}
               onHistoryReset={onHistoryReset}
@@ -241,7 +254,7 @@ export default function REPL(): JSX.Element {
         )}
         <Text color={getTheme().border}>{line.repeat(columns)}</Text>
         <CommandSuggestions query={value} selectedIndex={selectedIndex} />
-        <StatusBar model={modelId} mode={mode} thinking={loading} />
+        <StatusBar model={modelLabel} mode={mode} thinking={loading} />
       </Box>
     </Box>
   );

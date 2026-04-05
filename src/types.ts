@@ -1,5 +1,6 @@
 import type { ToolSet } from "ai";
 import type { Session } from "./utils/session";
+import type { WizardMode } from "./hooks/useChat";
 
 export type Mode = "chat" | "agent" | "plan";
 
@@ -74,6 +75,7 @@ export type CommandContext = {
   setMode: (mode: Mode) => void;
   pushMessage: (text: string) => void;
   abortController: AbortController;
+  openWizard: (mode: WizardMode) => void;
 };
 
 type LocalCommand = {

@@ -15,6 +15,8 @@ import type { Session } from "../utils/session";
 import type { PermissionDecision } from "../permissions";
 import { info, radioOn, star } from "../icons";
 
+export type WizardMode = "add" | "edit" | "remove" | "list";
+
 export function useChat(initialMode: Mode = "agent") {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [session, setSession] = useState<Session | undefined>(undefined);
@@ -22,6 +24,7 @@ export function useChat(initialMode: Mode = "agent") {
   const [mode, _setMode] = useState<Mode>(initialMode);
   const [pendingPermission, setPendingPermission] =
     useState<PermissionRequest | null>(null);
+  const [pendingWizard, setPendingWizard] = useState<WizardMode | null>(null);
   const modeRef = useRef<Mode>(initialMode);
   const abortControllerRef = useRef<AbortController>(new AbortController());
 
@@ -53,6 +56,14 @@ export function useChat(initialMode: Mode = "agent") {
     resolvePermission(decision);
     setPendingPermission(null);
   }, []);
+
+  const closeWizard = useCallback(
+    (message?: string) => {
+      setPendingWizard(null);
+      if (message) pushMessage(message);
+    },
+    [pushMessage],
+  );
 
   const handleOrchestratorEvent = useCallback(
     (event: OrchestratorEvent) => {
@@ -104,7 +115,8 @@ export function useChat(initialMode: Mode = "agent") {
 
   const submit = useCallback(
     async (input: string) => {
-      if (!input.trim() || loading || pendingPermission) return;
+      if (!input.trim() || loading || pendingPermission || pendingWizard)
+        return;
 
       setMessages((prev) => [
         ...prev,
@@ -126,6 +138,7 @@ export function useChat(initialMode: Mode = "agent") {
             setMode,
             pushMessage,
             abortController: abortControllerRef.current,
+            openWizard: setPendingWizard,
           });
           if (result) pushMessage(result);
           setLoading(false);
@@ -159,7 +172,7 @@ export function useChat(initialMode: Mode = "agent") {
           output: unknown;
         }) => {
           awardXP(toolResult.toolName)
-            .then(({ pet, leveledUp, oldLevel }) => {
+            .then(({ pet, leveledUp }) => {
               if (leveledUp) {
                 const flavor = getLevelFlavor(pet.level);
                 const unlock = LEVEL_UP_MESSAGES[pet.level];
@@ -233,6 +246,7 @@ export function useChat(initialMode: Mode = "agent") {
     [
       loading,
       pendingPermission,
+      pendingWizard,
       session,
       clearMessages,
       setMode,
@@ -251,5 +265,7 @@ export function useChat(initialMode: Mode = "agent") {
     pendingPermission,
     decide,
     pushMessage,
+    pendingWizard,
+    closeWizard,
   };
 }

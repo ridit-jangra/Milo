@@ -1,7 +1,16 @@
-import { createGroq } from "@ai-sdk/groq";
+import { getActiveProvider, buildProvider } from "./providers";
 
-export const provider = createGroq({
-  apiKey: process.env.APIKEY,
-});
+export async function getModel() {
+  const config = await getActiveProvider();
+  if (!config) {
+    throw new Error(
+      "no provider configured — run /provider add to get started 🐱",
+    );
+  }
+  return {
+    model: buildProvider(config),
+    modelId: `${config.name} · ${config.model}`,
+    config,
+  };
+}
 
-export const modelId = "openai/gpt-oss-120b";

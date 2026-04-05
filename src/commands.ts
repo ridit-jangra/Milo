@@ -9,6 +9,7 @@ import feed from "./commands/feed";
 import roast from "./commands/roast";
 import vibe from "./commands/vibe";
 import crimes from "./commands/crimes";
+import provider from "./commands/provider";
 
 const COMMANDS: Command[] = [
   clear,
@@ -21,6 +22,7 @@ const COMMANDS: Command[] = [
   roast,
   vibe,
   crimes,
+  provider,
 ];
 
 export function getCommands(): Command[] {

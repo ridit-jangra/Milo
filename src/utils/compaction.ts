@@ -1,5 +1,5 @@
 import { generateText } from "ai";
-import { provider, modelId } from "./model";
+import { getModel } from "./model";
 import type { Session } from "./session";
 import type { ModelMessage } from "ai";
 
@@ -29,7 +29,7 @@ export async function compactSession(session: Session): Promise<Session> {
   const recent = messages.slice(summarizeTo);
 
   const summaryResult = await generateText({
-    model: provider(modelId),
+    model: (await getModel()).model,
     system: `You are a conversation compactor. Your job is to summarize a conversation history into a dense, information-rich summary that preserves all important context.
 
 Include in your summary:

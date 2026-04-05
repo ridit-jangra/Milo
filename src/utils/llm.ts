@@ -1,5 +1,5 @@
-import { generateText, stepCountIs, type ToolSet } from "ai";
-import { modelId, provider } from "./model";
+import { generateText, stepCountIs } from "ai";
+import { getModel } from "./model";
 import {
   type Session,
   createSession,
@@ -30,8 +30,10 @@ export async function runLLM({
 
   activeSession.messages.push({ role: "user", content: prompt });
 
+  const { model, modelId } = await getModel();
+
   const result = await generateText({
-    model: provider(modelId),
+    model,
     system,
     messages: activeSession.messages,
     ...(tools ? { tools, stopWhen: stepCountIs(maxSteps) } : {}),
