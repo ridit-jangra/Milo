@@ -240,8 +240,8 @@ export default function REPL(): JSX.Element {
           </Box>
         )}
         <Text color={getTheme().border}>{line.repeat(columns)}</Text>
-        <StatusBar model={modelId} mode={mode} thinking={loading} />
         <CommandSuggestions query={value} selectedIndex={selectedIndex} />
+        <StatusBar model={modelId} mode={mode} thinking={loading} />
       </Box>
     </Box>
   );
