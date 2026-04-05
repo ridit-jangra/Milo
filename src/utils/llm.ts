@@ -6,6 +6,7 @@ import {
   loadMemoryIntoSession,
   saveSession,
 } from "./session";
+import { shouldCompact, compactSession } from "./compaction";
 import type { LLMOptions } from "../types";
 
 export async function runLLM({
@@ -17,8 +18,15 @@ export async function runLLM({
   onToolCall,
   onToolResult,
 }: LLMOptions): Promise<{ text: string; session: Session }> {
-  const activeSession = session ?? createSession();
+  let activeSession = session ?? createSession();
   loadMemoryIntoSession(activeSession);
+
+  if (shouldCompact(activeSession)) {
+    try {
+      activeSession = await compactSession(activeSession);
+      saveSession(activeSession);
+    } catch {}
+  }
 
   activeSession.messages.push({ role: "user", content: prompt });
 

@@ -90,6 +90,7 @@ const TOOL_RULES = `
   - Use BashTool for all git commands.
   - Use conventional commits: feat, fix, chore, refactor, docs, test, style.
   - There is NO GitTool. Use BashTool for ALL git commands.
+  - NEVER ask the user what changed. ALWAYS run "git status && git diff" yourself first. No exceptions.
   
   # Web
   - Use WebSearchTool when the user asks about current info, news, docs, or anything requiring live data.

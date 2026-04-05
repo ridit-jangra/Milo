@@ -4,4 +4,4 @@ export const provider = createGroq({
   apiKey: process.env.APIKEY,
 });
 
-export const modelId = "openai/gpt-oss-120b";
+export const modelId = "meta-llama/llama-4-scout-17b-16e-instruct";
