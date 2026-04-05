@@ -55,6 +55,7 @@ export type LLMOptions = {
   maxSteps?: number;
   onToolCall?: (toolCall: StepToolCall) => void;
   onToolResult?: (toolResult: StepToolResult) => void;
+  onOrchestratorEvent?: OnOrchestratorEvent;
 };
 
 export type CommandContext = {
@@ -86,3 +87,12 @@ export type Command = {
   aliases?: string[];
   userFacingName(): string;
 } & (LocalCommand | PromptCommand);
+
+export type OrchestratorEvent =
+  | { type: "plan_created"; tasks: { id: string; subtask: string }[] }
+  | { type: "agent_start"; taskId: string; subtask: string }
+  | { type: "agent_done"; taskId: string; result: string }
+  | { type: "connecting" }
+  | { type: "done" };
+
+export type OnOrchestratorEvent = (event: OrchestratorEvent) => void;

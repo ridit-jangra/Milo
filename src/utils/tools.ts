@@ -8,11 +8,12 @@ import { GrepTool } from "../tools/GrepTool/tool";
 import { MemoryEditTool } from "../tools/MemoryEditTool/tool";
 import { MemoryReadTool } from "../tools/MemoryReadTool/tool";
 import { MemoryWriteTool } from "../tools/MemoryWriteTool/tool";
-import { OrchestratorTool } from "../tools/OrchestratorTool/tool";
+import { createOrchestratorTool } from "../tools/OrchestratorTool/tool";
 import { RecallTool } from "../tools/RecallTool/tool";
 import { ThinkTool } from "../tools/ThinkTool/tool";
 import { WebFetchTool } from "../tools/WebFetchTool/tool";
 import { WebSearchTool } from "../tools/WebSearchTool/tool";
+import type { OnOrchestratorEvent } from "../types";
 
 export const agentTools = {
   FileReadTool,
@@ -31,6 +32,16 @@ export const agentTools = {
   WebSearchTool,
 };
 
+export const orchestratorAgentTools = {
+  FileReadTool,
+  FileWriteTool,
+  FileEditTool,
+  BashTool,
+  GrepTool,
+  GlobTool,
+  ThinkTool,
+};
+
 export const chatTools = {
   RecallTool,
   FileReadTool,
@@ -40,4 +51,8 @@ export const chatTools = {
   WebSearchTool,
 };
 
-export const planTools = { OrchestratorTool };
+export function createPlanTools(onEvent?: OnOrchestratorEvent) {
+  return {
+    OrchestratorTool: createOrchestratorTool(onEvent),
+  };
+}

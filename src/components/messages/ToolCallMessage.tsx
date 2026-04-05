@@ -28,6 +28,10 @@ function getCommand(toolName: string, input: unknown): string {
       return `glob ${a.pattern ?? ""}`;
     case "RecallTool":
       return `recall ${a.query ?? ""}`;
+    case "WebSearchTool":
+      return `search ${String((a as any).query ?? "")}`;
+    case "WebFetchTool":
+      return `fetch ${String((a as any).url ?? "")}`;
     case "MemoryReadTool":
       return `memory read`;
     case "MemoryWriteTool":
@@ -37,7 +41,9 @@ function getCommand(toolName: string, input: unknown): string {
     case "ThinkTool":
       return `think`;
     case "AgentTool":
-      return `agent`;
+      return `agent · ${String((a as any).task ?? (a as any).subtask ?? "").slice(0, 50)}`;
+    case "OrchestratorTool":
+      return `orchestrate · ${String((a as any).goal ?? "").slice(0, 50)}`;
     default:
       return toolName;
   }

@@ -3,8 +3,11 @@ import { taskSchema } from "../schemas";
 import { spawnAgent } from "../agent/agent";
 import type { Plan } from "../types";
 import { safeParseJSON } from "../../utils/json";
+import type { OnOrchestratorEvent } from "../../types";
 
 export class Orchestrator {
+  constructor(private onEvent?: OnOrchestratorEvent) {}
+
   private async create_plan(prompt: string) {
     const { text } =
       await chatWithModel(`Break this task into subtasks. Respond with ONLY valid JSON, no markdown, no explanation:
@@ -22,6 +25,7 @@ export class Orchestrator {
 
     const clean = text.replace(/```json|```/g, "").trim();
     const plan = taskSchema.parse(safeParseJSON(clean));
+    this.onEvent?.({ type: "plan_created", tasks: plan.tasks });
     return plan;
   }
 
@@ -49,7 +53,12 @@ export class Orchestrator {
         );
       }
 
-      const { result } = await spawnAgent(t.subtask);
+      const { result } = await spawnAgent(
+        t.subtask,
+        "agent",
+        this.onEvent,
+        taskId,
+      );
       results[taskId] = result;
       completed.add(taskId);
     };
@@ -58,6 +67,7 @@ export class Orchestrator {
   }
 
   private async complete(plan: Plan, results: Record<string, string>) {
+    this.onEvent?.({ type: "connecting" });
     const manifestSummary = Object.entries(results)
       .map(([id, result]) => `[${id}]: ${result}`)
       .join("\n");
@@ -67,6 +77,7 @@ export class Orchestrator {
       "connector",
     );
 
+    this.onEvent?.({ type: "done" });
     return {
       success: true,
       plan: plan.tasks.map((t) => t.id),

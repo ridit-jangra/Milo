@@ -13,6 +13,7 @@ const TIPS = [
   "use /mode plan for big tasks",
   "esc to interrupt at any time",
   "/help to see all commands",
+  "ctrl+t to switch mode",
 ];
 
 export function Header(): React.ReactNode {

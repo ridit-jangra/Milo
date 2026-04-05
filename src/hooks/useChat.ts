@@ -3,7 +3,7 @@ import { chatWithModel } from "../utils/chat";
 import { createAgent } from "../utils/agent";
 import { planWithModel } from "../utils/plan";
 import { findCommand } from "../commands";
-import type { Mode, ChatMessage } from "../types";
+import type { Mode, ChatMessage, OrchestratorEvent } from "../types";
 import type { Session } from "../utils/session";
 
 export function useChat(initialMode: Mode = "agent") {
@@ -31,6 +31,58 @@ export function useChat(initialMode: Mode = "agent") {
     ]);
   }, []);
 
+  const handleOrchestratorEvent = useCallback(
+    (event: OrchestratorEvent) => {
+      switch (event.type) {
+        case "plan_created":
+          pushMessage(
+            `📋 Plan created — ${event.tasks.length} subtasks:\n${event.tasks
+              .map((t) => `  [${t.id}] ${t.subtask}`)
+              .join("\n")}`,
+          );
+          break;
+
+        case "agent_start":
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `agent-${event.taskId}`,
+              type: "tool_call",
+              toolName: "AgentTool",
+              input: { task: event.subtask },
+            },
+          ]);
+          break;
+
+        case "agent_done":
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === `agent-${event.taskId}`
+                ? {
+                    id: msg.id,
+                    type: "tool_result" as const,
+                    toolName: "AgentTool",
+                    input: msg.type === "tool_call" ? msg.input : undefined,
+                    output: { output: event.result },
+                    success: true,
+                  }
+                : msg,
+            ),
+          );
+          break;
+
+        case "connecting":
+          pushMessage("🔗 Connecting all agents...");
+          break;
+
+        case "done":
+          pushMessage("✅ Orchestration complete.");
+          break;
+      }
+    },
+    [pushMessage],
+  );
+
   const submit = useCallback(
     async (input: string) => {
       if (!input.trim() || loading) return;
@@ -43,7 +95,6 @@ export function useChat(initialMode: Mode = "agent") {
 
       abortControllerRef.current = new AbortController();
 
-      // handle commands
       const found = findCommand(input);
       if (found) {
         const { command, args } = found;
@@ -70,44 +121,59 @@ export function useChat(initialMode: Mode = "agent") {
 
       try {
         const currentMode = modeRef.current;
-        const runner =
-          currentMode === "plan"
-            ? planWithModel
-            : currentMode === "chat"
-              ? chatWithModel
-              : createAgent;
 
-        const { text, session: newSession } = await runner(
-          input,
-          session,
-          (toolCall) => {
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: toolCall.id,
-                type: "tool_call",
-                toolName: toolCall.toolName,
-                input: toolCall.input,
-              },
-            ]);
-          },
-          (toolResult) => {
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === toolResult.id
-                  ? {
-                      id: toolResult.id,
-                      type: "tool_result" as const,
-                      toolName: toolResult.toolName,
-                      input: msg.type === "tool_call" ? msg.input : undefined,
-                      output: toolResult.output,
-                      success: true,
-                    }
-                  : msg,
-              ),
-            );
-          },
-        );
+        const onToolCall = (toolCall: {
+          id: string;
+          toolName: string;
+          input: unknown;
+        }) => {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: toolCall.id,
+              type: "tool_call",
+              toolName: toolCall.toolName,
+              input: toolCall.input,
+            },
+          ]);
+        };
+
+        const onToolResult = (toolResult: {
+          id: string;
+          toolName: string;
+          output: unknown;
+        }) => {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === toolResult.id
+                ? {
+                    id: toolResult.id,
+                    type: "tool_result" as const,
+                    toolName: toolResult.toolName,
+                    input: msg.type === "tool_call" ? msg.input : undefined,
+                    output: toolResult.output,
+                    success: true,
+                  }
+                : msg,
+            ),
+          );
+        };
+
+        const { text, session: newSession } =
+          currentMode === "plan"
+            ? await planWithModel(
+                input,
+                session,
+                onToolCall,
+                onToolResult,
+                handleOrchestratorEvent, // <-- only plan gets this
+              )
+            : await (currentMode === "chat" ? chatWithModel : createAgent)(
+                input,
+                session,
+                onToolCall,
+                onToolResult,
+              );
 
         setMessages((prev) => [
           ...prev,
@@ -127,7 +193,15 @@ export function useChat(initialMode: Mode = "agent") {
         setLoading(false);
       }
     },
-    [loading, session, clearMessages, setMode, pushMessage],
+    [
+      loading,
+      session,
+      clearMessages,
+      setMode,
+      pushMessage,
+      handleOrchestratorEvent,
+      pushMessage,
+    ],
   );
 
   return { messages, loading, mode, setMode, submit, clearMessages };

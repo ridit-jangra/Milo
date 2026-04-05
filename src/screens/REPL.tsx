@@ -12,7 +12,10 @@ import {
   CommandSuggestions,
   getMatchingCommands,
 } from "../components/CommandSuggestions";
-import type { ChatMessage } from "../types";
+import type { ChatMessage, Mode } from "../types";
+import { StatusBar } from "../components/StatusBar";
+import { modelId } from "../utils/model";
+import { findShortcut } from "../shortcuts";
 
 const HEADER_ITEM = [{ id: "header", type: "header" as const }];
 
@@ -25,7 +28,7 @@ export default function REPL(): JSX.Element {
   const [value, setValue] = useState("");
   const [cursorOffset, setCursorOffset] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const { messages, loading, submit } = useChat();
+  const { messages, loading, submit, mode, setMode, clearMessages } = useChat();
 
   function onSubmit(input: string) {
     if (!input.trim() || loading) return;
@@ -52,20 +55,43 @@ export default function REPL(): JSX.Element {
         }
       }
       if (key.upArrow && value.startsWith("/")) {
-        const matches = getMatchingCommands(value);
         setSelectedIndex((i) => Math.max(0, i - 1));
       }
       if (key.downArrow && value.startsWith("/")) {
         const matches = getMatchingCommands(value);
         setSelectedIndex((i) => Math.min(matches.length - 1, i + 1));
       }
+      const shortcut = findShortcut(input, key);
+      if (shortcut) {
+        shortcut.action({ clearMessages, mode, setMode });
+      }
     },
     { isActive: !loading },
   );
 
+  const staticMessages = messages.filter(
+    (m) => !(m.type === "tool_call" && (m as any).isOrchestrated),
+  );
+
+  const orchestratedMessages = messages.filter(
+    (m) =>
+      (m.type === "tool_call" || m.type === "tool_result") &&
+      (m as any).isOrchestrated,
+  );
+
+  const orchestratedDone = orchestratedMessages.filter(
+    (m) => m.type === "tool_result",
+  );
+
+  const orchestratedTotal = messages.filter(
+    (m) => m.type === "tool_call" && (m as any).isOrchestrated,
+  );
+
+  const isOrchestrating = orchestratedTotal.length > 0 && loading;
+
   const staticItems: StaticItem[] = [
     ...HEADER_ITEM,
-    ...messages.map((msg, index) => ({
+    ...staticMessages.map((msg, index) => ({
       id: msg.id,
       type: "message" as const,
       msg,
@@ -85,6 +111,39 @@ export default function REPL(): JSX.Element {
           );
         }}
       </Static>
+
+      {/* live orchestrator progress — outside Static so it re-renders */}
+      {isOrchestrating && orchestratedTotal.length > 0 && (
+        <Box flexDirection="column" marginTop={1} marginLeft={2}>
+          <Text color={getTheme().primary}>
+            ⚡ agents{" "}
+            <Text color={getTheme().success}>{orchestratedDone.length}</Text>
+            <Text color={getTheme().secondaryText}>
+              /{orchestratedTotal.length} done
+            </Text>
+          </Text>
+          {orchestratedTotal.slice(-4).map((m) => {
+            const isDone = orchestratedMessages.some(
+              (r) => r.type === "tool_result" && r.id === m.id,
+            );
+            const task = String(
+              (m.type === "tool_call" ? (m.input as any)?.task : "") ?? "",
+            ).slice(0, columns - 12);
+            return (
+              <Box key={m.id} flexDirection="row" gap={1}>
+                <Text
+                  color={isDone ? getTheme().success : getTheme().secondaryText}
+                >
+                  {isDone ? "✔" : "◆"}
+                </Text>
+                <Text color={getTheme().secondaryText} dimColor>
+                  {task}
+                </Text>
+              </Box>
+            );
+          })}
+        </Box>
+      )}
 
       {loading && <Spinner />}
 
@@ -106,6 +165,7 @@ export default function REPL(): JSX.Element {
           />
         </Box>
         <Text color={getTheme().border}>{borderLine}</Text>
+        <StatusBar model={modelId} mode={mode} />
         <CommandSuggestions query={value} selectedIndex={selectedIndex} />
       </Box>
     </Box>
