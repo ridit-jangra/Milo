@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Text } from "ink";
 import { getTheme } from "../../utils/theme";
-import { tick, cross, cornerBottomLeft, line } from "../../icons";
+import { tick, cross, cornerBottomLeft, line, dot, bullet } from "../../icons";
 
 type Props = {
   toolName: string;
@@ -124,8 +124,8 @@ export function ToolResultMessage({
       </Text>
       {outputPreview && (
         <Text color={getTheme().secondaryText} dimColor>
-          {" · "}
-          {outputPreview}
+          {" "}
+          {dot} {outputPreview}
         </Text>
       )}
     </Box>
