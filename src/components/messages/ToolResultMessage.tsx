@@ -69,7 +69,12 @@ function getOutputPreview(toolName: string, output: unknown): string | null {
         .split("\n").length;
       return `${lines} lines`;
     }
-    case "GrepTool":
+    case "GrepTool": {
+      const matches = Array.isArray(o.matches) ? o.matches.length : 0;
+      return matches > 0
+        ? `${matches} match${matches === 1 ? "" : "es"}`
+        : "no matches";
+    }
     case "RecallTool": {
       const matches = String(o.output ?? "")
         .trim()
