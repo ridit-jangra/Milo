@@ -89,6 +89,7 @@ const TOOL_RULES = `
   - Never generate a commit message without reading the actual changes first.
   - Use BashTool for all git commands.
   - Use conventional commits: feat, fix, chore, refactor, docs, test, style.
+  - There is NO GitTool. Use BashTool for ALL git commands.
   
   # Web
   - Use WebSearchTool when the user asks about current info, news, docs, or anything requiring live data.

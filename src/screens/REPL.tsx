@@ -172,7 +172,6 @@ export default function REPL(): JSX.Element {
         }}
       </Static>
 
-      {/* orchestrator progress — fixed height so Ink overwrites cleanly */}
       <Box
         flexDirection="column"
         marginLeft={2}
@@ -214,7 +213,6 @@ export default function REPL(): JSX.Element {
         )}
       </Box>
 
-      {/* spinner — always reserves 2 lines so unmount doesn't orphan */}
       <Box minHeight={2}>{loading && <Spinner />}</Box>
 
       <Box flexDirection="column">
@@ -242,7 +240,7 @@ export default function REPL(): JSX.Element {
           </Box>
         )}
         <Text color={getTheme().border}>{line.repeat(columns)}</Text>
-        <StatusBar model={modelId} mode={mode} />
+        <StatusBar model={modelId} mode={mode} thinking={loading} />
         <CommandSuggestions query={value} selectedIndex={selectedIndex} />
       </Box>
     </Box>

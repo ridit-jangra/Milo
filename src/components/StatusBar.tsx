@@ -3,13 +3,15 @@ import { Box, Text } from "ink";
 import { getTheme } from "../utils/theme";
 import { useTerminalSize } from "../hooks/useTerminalSize";
 import type { Mode } from "../types";
-import { bullet, diamond, dot, star } from "../icons";
-import { readPet, renderXpBar } from "../pet";
+import { bullet, diamond, star } from "../icons";
+import { readPet } from "../pet";
 import type { Pet } from "../types";
+import Spinner from "ink-spinner";
 
 type Props = {
   model: string;
   mode: Mode;
+  thinking: boolean;
 };
 
 function getModeColor(mode: Mode): string {
@@ -23,7 +25,11 @@ function getModeColor(mode: Mode): string {
   }
 }
 
-export function StatusBar({ model, mode }: Props): React.ReactNode {
+export function StatusBar({
+  model,
+  mode,
+  thinking = false,
+}: Props): React.ReactNode {
   const { columns } = useTerminalSize();
   const [pet, setPet] = useState<Pet | null>(null);
 
@@ -51,10 +57,24 @@ export function StatusBar({ model, mode }: Props): React.ReactNode {
 
   return (
     <Box width={columns} justifyContent="space-between">
-      <Box>
-        <Text color={getTheme().secondary}>{levelPart}</Text>
-        <Text>{dot}</Text>
-        <Text color={getTheme().success}>{xpPart}</Text>
+      <Box gap={2}>
+        {thinking ? (
+          <Box>
+            <Spinner type="bluePulse" />
+            <Text>Thinking</Text>
+          </Box>
+        ) : (
+          <>
+            <Box>
+              <Text color={getTheme().error}>{star}</Text>
+              <Text color={getTheme().secondary}>{levelPart}</Text>
+            </Box>
+            <Box>
+              <Text color={getTheme().warning}>{diamond}</Text>
+              <Text color={getTheme().success}>{xpPart}</Text>
+            </Box>
+          </>
+        )}
       </Box>
       <Text color={getTheme().secondaryText}>{modelPart}</Text>
       <Text backgroundColor={modeBg} color="#000000">

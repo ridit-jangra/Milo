@@ -6,8 +6,22 @@ import init from "./commands/init";
 import genz from "./commands/genz";
 import pet from "./commands/pet";
 import feed from "./commands/feed";
+import roast from "./commands/roast";
+import vibe from "./commands/vibe";
+import crimes from "./commands/crimes";
 
-const COMMANDS: Command[] = [clear, help, mode, init, genz, pet, feed];
+const COMMANDS: Command[] = [
+  clear,
+  help,
+  mode,
+  init,
+  genz,
+  pet,
+  feed,
+  roast,
+  vibe,
+  crimes,
+];
 
 export function getCommands(): Command[] {
   return COMMANDS.filter((c) => c.isEnabled);
