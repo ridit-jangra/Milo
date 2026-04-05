@@ -3,6 +3,7 @@ import { z } from "zod";
 import { readFile, writeFile } from "fs/promises";
 import { createPatch } from "diff";
 import { DESCRIPTION, PROMPT } from "./prompt.js";
+import { requestPermission } from "../../permissions";
 
 export const FileEditTool = tool({
   description: DESCRIPTION + "\n\n" + PROMPT,
@@ -20,13 +21,14 @@ export const FileEditTool = tool({
       if (matches === 0)
         return { success: false, error: "old_string not found in file" };
       if (matches > 1)
-        return {
-          success: false,
-          error: `old_string matches ${matches} times, must match exactly once`,
-        };
+        return { success: false, error: `old_string matches ${matches} times` };
 
       const newContent = content.replace(old_string, new_string);
       const patch = createPatch(path, content, newContent);
+
+      const decision = await requestPermission("FileEditTool", { path, patch });
+      if (decision === "deny")
+        return { success: false, error: "User denied permission" };
 
       await writeFile(path, newContent, "utf-8");
       return { success: true, path, patch };

@@ -28,3 +28,4 @@ export const cornerBottomLeft = "╰";
 export const cornerTopRight = "╮";
 export const cornerBottomRight = "╯";
 export const diamond = "◆";
+export const upDownArrow = "↑↓";

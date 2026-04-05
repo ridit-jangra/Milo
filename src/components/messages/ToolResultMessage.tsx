@@ -1,7 +1,11 @@
 import React from "react";
 import { Box, Text } from "ink";
+import { parsePatch } from "diff";
+import type { StructuredPatchHunk } from "diff";
 import { getTheme } from "../../utils/theme";
-import { tick, cross, cornerBottomLeft, line, dot, bullet } from "../../icons";
+import { useTerminalSize } from "../../hooks/useTerminalSize";
+import { StructuredDiff } from "../StructuredDiff";
+import { star, cornerBottomLeft, line, dot } from "../../icons";
 
 type Props = {
   toolName: string;
@@ -30,9 +34,9 @@ function getAction(toolName: string, input: unknown): string {
     case "RecallTool":
       return `recall ${a.query ?? ""}`;
     case "WebSearchTool":
-      return `search ${(a as any).query ?? ""}`;
+      return `search ${String((a as any).query ?? "")}`;
     case "WebFetchTool":
-      return `fetch ${(a as any).url ?? ""}`;
+      return `fetch ${String((a as any).url ?? "")}`;
     case "MemoryReadTool":
       return `memory read`;
     case "MemoryWriteTool":
@@ -42,7 +46,9 @@ function getAction(toolName: string, input: unknown): string {
     case "ThinkTool":
       return `think`;
     case "AgentTool":
-      return `agent`;
+      return `agent · ${String((a as any).task ?? (a as any).subtask ?? "").slice(0, 50)}`;
+    case "OrchestratorTool":
+      return `orchestrate · ${String((a as any).goal ?? "").slice(0, 50)}`;
     default:
       return toolName;
   }
@@ -51,7 +57,6 @@ function getAction(toolName: string, input: unknown): string {
 function getOutputPreview(toolName: string, output: unknown): string | null {
   if (!output || typeof output !== "object") return null;
   const o = output as Record<string, unknown>;
-
   switch (toolName) {
     case "BashTool": {
       const out = String(o.output ?? "").trim();
@@ -64,7 +69,8 @@ function getOutputPreview(toolName: string, output: unknown): string | null {
         .split("\n").length;
       return `${lines} lines`;
     }
-    case "GrepTool": {
+    case "GrepTool":
+    case "RecallTool": {
       const matches = String(o.output ?? "")
         .trim()
         .split("\n")
@@ -81,15 +87,6 @@ function getOutputPreview(toolName: string, output: unknown): string | null {
       const content = String(o.content ?? "").trim();
       return content.length > 0 ? `${content.length} chars` : null;
     }
-    case "RecallTool": {
-      const matches = String(o.output ?? "")
-        .trim()
-        .split("\n")
-        .filter(Boolean).length;
-      return matches > 0
-        ? `${matches} match${matches === 1 ? "" : "es"}`
-        : "no matches";
-    }
     case "FileWriteTool":
     case "FileEditTool":
       return o.success ? "saved" : "failed";
@@ -100,6 +97,37 @@ function getOutputPreview(toolName: string, output: unknown): string | null {
   }
 }
 
+function getDiff(
+  toolName: string,
+  output: unknown,
+): StructuredPatchHunk | null {
+  if (!output || typeof output !== "object") return null;
+  const o = output as Record<string, unknown>;
+  if (!o.success) return null;
+
+  if (toolName === "FileWriteTool") {
+    const content = String(o.content ?? "");
+    if (!content) return null;
+    const lines = content.split("\n").map((l) => "+" + l);
+    return {
+      oldStart: 1,
+      oldLines: 0,
+      newStart: 1,
+      newLines: lines.length,
+      lines,
+    };
+  }
+
+  if (toolName === "FileEditTool") {
+    const patch = String(o.patch ?? "");
+    if (!patch) return null;
+    const parsed = parsePatch(patch);
+    return parsed[0]?.hunks[0] ?? null;
+  }
+
+  return null;
+}
+
 export function ToolResultMessage({
   toolName,
   input,
@@ -107,18 +135,20 @@ export function ToolResultMessage({
   success,
   addMargin = false,
 }: Props): React.ReactNode {
+  const { columns } = useTerminalSize();
   const action = getAction(toolName, input);
   const preview = action.length > 60 ? action.slice(0, 60) + "…" : action;
   const outputPreview = getOutputPreview(toolName, output);
+  const hunk = getDiff(toolName, output);
 
   return (
     <Box flexDirection="row" marginTop={addMargin ? 1 : 0}>
       <Box minWidth={2} width={2}>
         <Text color={success ? getTheme().success : getTheme().error}>
-          {success ? tick : cross}
+          {star}
         </Text>
       </Box>
-      <Box flexDirection="column">
+      <Box flexDirection="column" width={columns - 4}>
         <Text>{toolName}</Text>
         <Box gap={1} alignItems="center">
           <Text color={getTheme().secondaryText} dimColor>
@@ -134,6 +164,12 @@ export function ToolResultMessage({
             </Text>
           )}
         </Box>
+
+        {hunk && (
+          <Box marginTop={1} marginLeft={2} flexDirection="column">
+            <StructuredDiff patch={hunk} dim={false} width={columns - 8} />
+          </Box>
+        )}
       </Box>
     </Box>
   );

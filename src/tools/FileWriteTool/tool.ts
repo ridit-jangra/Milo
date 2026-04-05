@@ -3,6 +3,10 @@ import { z } from "zod";
 import { writeFile, mkdir } from "fs/promises";
 import { dirname } from "path";
 import { DESCRIPTION, PROMPT } from "./prompt.js";
+import {
+  requestPermission,
+  TOOLS_REQUIRING_PERMISSION,
+} from "../../permissions";
 
 export const FileWriteTool = tool({
   description: DESCRIPTION + "\n\n" + PROMPT,
@@ -13,9 +17,16 @@ export const FileWriteTool = tool({
   title: "WriteFile",
   execute: async ({ path, content }) => {
     try {
+      const decision = await requestPermission("FileWriteTool", {
+        path,
+        content,
+      });
+      if (decision === "deny")
+        return { success: false, error: "User denied permission" };
+
       await mkdir(dirname(path), { recursive: true });
       await writeFile(path, content, "utf-8");
-      return { success: true, path };
+      return { success: true, path, content };
     } catch (err) {
       return { success: false, error: String(err) };
     }

@@ -7,6 +7,7 @@ import {
   BANNED_COMMANDS,
 } from "./prompt.js";
 import { PersistentShell } from "../../utils/PersistentShell.js";
+import { requestPermission } from "../../permissions.js";
 
 const inputSchema = z.object({
   command: z.string().describe("The bash command to execute"),
@@ -21,6 +22,10 @@ export const BashTool = {
   title: "Bash",
   inputSchema,
   execute: async ({ command, timeout }: z.infer<typeof inputSchema>) => {
+    const decision = await requestPermission("BashTool", { command });
+    if (decision === "deny")
+      return { success: false, output: "User denied permission" };
+
     try {
       const banned = BANNED_COMMANDS.find(
         (cmd) => command.split(/\s+/)[0] === cmd,

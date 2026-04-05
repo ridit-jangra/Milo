@@ -12,10 +12,11 @@ import {
   CommandSuggestions,
   getMatchingCommands,
 } from "../components/CommandSuggestions";
-import type { ChatMessage, Mode } from "../types";
+import type { ChatMessage } from "../types";
 import { StatusBar } from "../components/StatusBar";
 import { modelId } from "../utils/model";
 import { findShortcut } from "../shortcuts";
+import { PermissionCard } from "../components/permissions/PermissionCard";
 
 const HEADER_ITEM = [{ id: "header", type: "header" as const }];
 
@@ -28,7 +29,16 @@ export default function REPL(): JSX.Element {
   const [value, setValue] = useState("");
   const [cursorOffset, setCursorOffset] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const { messages, loading, submit, mode, setMode, clearMessages } = useChat();
+  const {
+    messages,
+    loading,
+    submit,
+    mode,
+    setMode,
+    clearMessages,
+    decide,
+    pendingPermission,
+  } = useChat();
 
   function onSubmit(input: string) {
     if (!input.trim() || loading) return;
@@ -112,7 +122,6 @@ export default function REPL(): JSX.Element {
         }}
       </Static>
 
-      {/* live orchestrator progress — outside Static so it re-renders */}
       {isOrchestrating && orchestratedTotal.length > 0 && (
         <Box flexDirection="column" marginTop={1} marginLeft={2}>
           <Text color={getTheme().primary}>
@@ -149,21 +158,25 @@ export default function REPL(): JSX.Element {
 
       <Box flexDirection="column" marginTop={1}>
         <Text color={getTheme().border}>{borderLine}</Text>
-        <Box paddingX={1}>
-          <Text color={getTheme().primary}>{pointer} </Text>
-          <TextInput
-            value={value}
-            onChange={setValue}
-            onSubmit={onSubmit}
-            onExit={() => process.exit(0)}
-            columns={columns - 6}
-            cursorOffset={cursorOffset}
-            onChangeCursorOffset={setCursorOffset}
-            placeholder="ask vein anything..."
-            isDimmed={loading}
-            focus={!loading}
-          />
-        </Box>
+        {pendingPermission ? (
+          <PermissionCard permission={pendingPermission} onDecide={decide} />
+        ) : (
+          <Box paddingX={1}>
+            <Text color={getTheme().primary}>{pointer} </Text>
+            <TextInput
+              value={value}
+              onChange={setValue}
+              onSubmit={onSubmit}
+              onExit={() => process.exit(0)}
+              columns={columns - 6}
+              cursorOffset={cursorOffset}
+              onChangeCursorOffset={setCursorOffset}
+              placeholder="ask vein anything..."
+              isDimmed={loading}
+              focus={!loading}
+            />
+          </Box>
+        )}
         <Text color={getTheme().border}>{borderLine}</Text>
         <StatusBar model={modelId} mode={mode} />
         <CommandSuggestions query={value} selectedIndex={selectedIndex} />

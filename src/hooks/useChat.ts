@@ -1,16 +1,29 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { chatWithModel } from "../utils/chat";
 import { createAgent } from "../utils/agent";
 import { planWithModel } from "../utils/plan";
 import { findCommand } from "../commands";
-import type { Mode, ChatMessage, OrchestratorEvent } from "../types";
+import {
+  onPermissionRequest,
+  resolvePermission,
+  TOOLS_REQUIRING_PERMISSION,
+} from "../permissions";
+import type {
+  Mode,
+  ChatMessage,
+  OrchestratorEvent,
+  PermissionRequest,
+} from "../types";
 import type { Session } from "../utils/session";
+import type { PermissionDecision } from "../permissions";
 
 export function useChat(initialMode: Mode = "agent") {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [session, setSession] = useState<Session | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [mode, _setMode] = useState<Mode>(initialMode);
+  const [pendingPermission, setPendingPermission] =
+    useState<PermissionRequest | null>(null);
   const modeRef = useRef<Mode>(initialMode);
   const abortControllerRef = useRef<AbortController>(new AbortController());
 
@@ -31,6 +44,19 @@ export function useChat(initialMode: Mode = "agent") {
     ]);
   }, []);
 
+  // listen for permission requests from tools
+  useEffect(() => {
+    const unsub = onPermissionRequest((p) => {
+      setPendingPermission({ toolName: p.toolName, input: p.input });
+    });
+    return unsub;
+  }, []);
+
+  const decide = useCallback((decision: PermissionDecision) => {
+    resolvePermission(decision);
+    setPendingPermission(null);
+  }, []);
+
   const handleOrchestratorEvent = useCallback(
     (event: OrchestratorEvent) => {
       switch (event.type) {
@@ -41,7 +67,6 @@ export function useChat(initialMode: Mode = "agent") {
               .join("\n")}`,
           );
           break;
-
         case "agent_start":
           setMessages((prev) => [
             ...prev,
@@ -53,7 +78,6 @@ export function useChat(initialMode: Mode = "agent") {
             },
           ]);
           break;
-
         case "agent_done":
           setMessages((prev) =>
             prev.map((msg) =>
@@ -70,11 +94,9 @@ export function useChat(initialMode: Mode = "agent") {
             ),
           );
           break;
-
         case "connecting":
           pushMessage("🔗 Connecting all agents...");
           break;
-
         case "done":
           pushMessage("✅ Orchestration complete.");
           break;
@@ -85,7 +107,7 @@ export function useChat(initialMode: Mode = "agent") {
 
   const submit = useCallback(
     async (input: string) => {
-      if (!input.trim() || loading) return;
+      if (!input.trim() || loading || pendingPermission) return;
 
       setMessages((prev) => [
         ...prev,
@@ -98,7 +120,6 @@ export function useChat(initialMode: Mode = "agent") {
       const found = findCommand(input);
       if (found) {
         const { command, args } = found;
-
         if (command.type === "local") {
           const result = await command.call(args, {
             clearMessages,
@@ -113,7 +134,6 @@ export function useChat(initialMode: Mode = "agent") {
           setLoading(false);
           return;
         }
-
         if (command.type === "prompt") {
           input = await command.getPromptForCommand(args);
         }
@@ -166,7 +186,7 @@ export function useChat(initialMode: Mode = "agent") {
                 session,
                 onToolCall,
                 onToolResult,
-                handleOrchestratorEvent, // <-- only plan gets this
+                handleOrchestratorEvent,
               )
             : await (currentMode === "chat" ? chatWithModel : createAgent)(
                 input,
@@ -195,14 +215,23 @@ export function useChat(initialMode: Mode = "agent") {
     },
     [
       loading,
+      pendingPermission,
       session,
       clearMessages,
       setMode,
       pushMessage,
       handleOrchestratorEvent,
-      pushMessage,
     ],
   );
 
-  return { messages, loading, mode, setMode, submit, clearMessages };
+  return {
+    messages,
+    loading,
+    mode,
+    setMode,
+    submit,
+    clearMessages,
+    pendingPermission,
+    decide,
+  };
 }

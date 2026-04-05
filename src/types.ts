@@ -14,6 +14,14 @@ export type ChatMessage =
       input: unknown;
       output: unknown;
       success: boolean;
+    }
+  | {
+      id: string;
+      type: "permission_request";
+      toolName: string;
+      input: unknown;
+      preview: unknown;
+      resolve: (decision: "allow" | "allow_session" | "deny") => void;
     };
 
 export interface Theme {
@@ -96,3 +104,8 @@ export type OrchestratorEvent =
   | { type: "done" };
 
 export type OnOrchestratorEvent = (event: OrchestratorEvent) => void;
+
+export type PermissionRequest = {
+  toolName: string;
+  input: unknown;
+};
