@@ -118,16 +118,23 @@ export function ToolResultMessage({
           {success ? tick : cross}
         </Text>
       </Box>
-      <Text color={getTheme().secondaryText} dimColor>
-        {cornerBottomLeft}
-        {line} {preview}
-      </Text>
-      {outputPreview && (
-        <Text color={getTheme().secondaryText} dimColor>
-          {" "}
-          {dot} {outputPreview}
-        </Text>
-      )}
+      <Box flexDirection="column">
+        <Text>{toolName}</Text>
+        <Box gap={1} alignItems="center">
+          <Text color={getTheme().secondaryText} dimColor>
+            {cornerBottomLeft}
+            {line} {preview}
+          </Text>
+          <Text dimColor color={getTheme().secondaryText}>
+            {dot}
+          </Text>
+          {outputPreview && (
+            <Text color={getTheme().secondaryText} dimColor>
+              {outputPreview}
+            </Text>
+          )}
+        </Box>
+      </Box>
     </Box>
   );
 }
