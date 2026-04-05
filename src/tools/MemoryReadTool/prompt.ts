@@ -1,5 +1,5 @@
 export const DESCRIPTION = "Read a persistent memory file.";
-export const PROMPT = `Reads from ~/.vein/memory/ to recall information from past sessions.
+export const PROMPT = `Reads from ~/.milo/memory/ to recall information from past sessions.
 
 Use this at the start of a session to load context about:
 - User preferences

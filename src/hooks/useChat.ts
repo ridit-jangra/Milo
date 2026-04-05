@@ -3,11 +3,7 @@ import { chatWithModel } from "../utils/chat";
 import { createAgent } from "../utils/agent";
 import { planWithModel } from "../utils/plan";
 import { findCommand } from "../commands";
-import {
-  onPermissionRequest,
-  resolvePermission,
-  TOOLS_REQUIRING_PERMISSION,
-} from "../permissions";
+import { onPermissionRequest, resolvePermission } from "../permissions";
 import type {
   Mode,
   ChatMessage,
@@ -16,6 +12,7 @@ import type {
 } from "../types";
 import type { Session } from "../utils/session";
 import type { PermissionDecision } from "../permissions";
+import { info, radioOn, star } from "../icons";
 
 export function useChat(initialMode: Mode = "agent") {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -44,7 +41,6 @@ export function useChat(initialMode: Mode = "agent") {
     ]);
   }, []);
 
-  // listen for permission requests from tools
   useEffect(() => {
     const unsub = onPermissionRequest((p) => {
       setPendingPermission({ toolName: p.toolName, input: p.input });
@@ -62,7 +58,7 @@ export function useChat(initialMode: Mode = "agent") {
       switch (event.type) {
         case "plan_created":
           pushMessage(
-            `📋 Plan created — ${event.tasks.length} subtasks:\n${event.tasks
+            `${info} Plan created — ${event.tasks.length} subtasks:\n${event.tasks
               .map((t) => `  [${t.id}] ${t.subtask}`)
               .join("\n")}`,
           );
@@ -95,10 +91,10 @@ export function useChat(initialMode: Mode = "agent") {
           );
           break;
         case "connecting":
-          pushMessage("🔗 Connecting all agents...");
+          pushMessage(`${radioOn} Connecting all agents...`);
           break;
         case "done":
-          pushMessage("✅ Orchestration complete.");
+          pushMessage(`${star} Orchestration complete.`);
           break;
       }
     },
@@ -140,8 +136,6 @@ export function useChat(initialMode: Mode = "agent") {
       }
 
       try {
-        const currentMode = modeRef.current;
-
         const onToolCall = (toolCall: {
           id: string;
           toolName: string;
@@ -179,21 +173,29 @@ export function useChat(initialMode: Mode = "agent") {
           );
         };
 
-        const { text, session: newSession } =
+        const actualPrompt = input;
+
+        let text: string;
+        let newSession: Session;
+
+        const currentMode = modeRef.current;
+        const result =
           currentMode === "plan"
             ? await planWithModel(
-                input,
+                actualPrompt,
                 session,
                 onToolCall,
                 onToolResult,
                 handleOrchestratorEvent,
               )
             : await (currentMode === "chat" ? chatWithModel : createAgent)(
-                input,
+                actualPrompt,
                 session,
                 onToolCall,
                 onToolResult,
               );
+        text = result.text;
+        newSession = result.session;
 
         setMessages((prev) => [
           ...prev,
@@ -233,5 +235,6 @@ export function useChat(initialMode: Mode = "agent") {
     clearMessages,
     pendingPermission,
     decide,
+    pushMessage,
   };
 }

@@ -1,5 +1,5 @@
 export const DESCRIPTION = "Write content to a persistent memory file.";
-export const PROMPT = `Saves information to ~/.vein/memory/ for use across sessions.
+export const PROMPT = `Saves information to ~/.milo/memory/ for use across sessions.
 
 Use this to remember:
 - User preferences and conventions

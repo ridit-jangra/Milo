@@ -109,8 +109,6 @@ export default function REPL(): JSX.Element {
     })),
   ];
 
-  const borderLine = line.repeat(columns - 2);
-
   return (
     <Box flexDirection="column" height="100%">
       <Static items={staticItems}>
@@ -157,7 +155,7 @@ export default function REPL(): JSX.Element {
       {loading && <Spinner />}
 
       <Box flexDirection="column" marginTop={1}>
-        <Text color={getTheme().border}>{borderLine}</Text>
+        <Text color={getTheme().border}>{line.repeat(columns)}</Text>
         {pendingPermission ? (
           <PermissionCard permission={pendingPermission} onDecide={decide} />
         ) : (
@@ -171,13 +169,15 @@ export default function REPL(): JSX.Element {
               columns={columns - 6}
               cursorOffset={cursorOffset}
               onChangeCursorOffset={setCursorOffset}
-              placeholder="ask vein anything..."
+              placeholder="ask milo anything..."
               isDimmed={loading}
-              focus={!loading}
+              focus={!loading && !pendingPermission}
             />
           </Box>
         )}
-        <Text color={getTheme().border}>{borderLine}</Text>
+
+        {/* bottom border */}
+        <Text color={getTheme().border}>{line.repeat(columns)}</Text>
         <StatusBar model={modelId} mode={mode} />
         <CommandSuggestions query={value} selectedIndex={selectedIndex} />
       </Box>

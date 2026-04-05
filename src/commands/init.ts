@@ -6,7 +6,7 @@ import { join } from "path";
 const command = {
   type: "prompt",
   name: "init",
-  description: "Generate VEIN.md for this project",
+  description: "Generate MILO.md for this project",
   isEnabled: true,
   isHidden: false,
   progressMessage: "analyzing your codebase",
@@ -42,7 +42,7 @@ const command = {
         .filter(Boolean)
         .join(", ") || "JavaScript";
 
-    return `Please analyze this codebase and create a VEIN.md file containing:
+    return `Please analyze this codebase and create a MILO.md file containing:
 
 1. **Project overview** — what this project does, its purpose, and high-level architecture
 2. **Tech stack** — languages (detected: ${langs}), frameworks, runtimes, and key libraries
@@ -56,7 +56,7 @@ const command = {
 Rules:
 - Be concise but complete — around 30-40 lines
 - Use real values found in the codebase, not placeholders
-- If there's already a VEIN.md, improve it rather than replacing it
+- If there's already a MILO.md, improve it rather than replacing it
 - If there are Cursor rules (.cursor/rules/ or .cursorrules) or other AI context files, incorporate them
 - Format with markdown headers for each section`;
   },

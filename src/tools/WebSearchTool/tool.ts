@@ -13,7 +13,7 @@ export const WebSearchTool = tool({
       const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
       const res = await fetch(url, {
         headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; Vein/1.0)",
+          "User-Agent": "Mozilla/5.0 (compatible; Milo/1.0)",
         },
         signal: AbortSignal.timeout(10000),
       });

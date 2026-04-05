@@ -1,9 +1,9 @@
 import { execSync } from "child_process";
 import { readFileSync, existsSync } from "fs";
 
-const SCREENSHOT_PATH_MAC = "/tmp/vein_latest_screenshot.png";
-const SCREENSHOT_PATH_WIN = "%TEMP%\\vein_latest_screenshot.png";
-const SCREENSHOT_PATH_LINUX = "/tmp/vein_latest_screenshot.png";
+const SCREENSHOT_PATH_MAC = "/tmp/milo_latest_screenshot.png";
+const SCREENSHOT_PATH_WIN = "%TEMP%\\milo_latest_screenshot.png";
+const SCREENSHOT_PATH_LINUX = "/tmp/milo_latest_screenshot.png";
 
 export const CLIPBOARD_ERROR_MESSAGE =
   "No image found in clipboard. Use your platform screenshot tool to copy a screenshot to clipboard.";

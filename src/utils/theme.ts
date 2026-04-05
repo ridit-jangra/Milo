@@ -1,4 +1,4 @@
-import { VEIN_BASE_DIR } from "./env";
+import { MILO_BASE_DIR } from "./env";
 import { join } from "path";
 import { existsSync, readFileSync } from "fs";
 import type { Theme } from "../types";
@@ -86,7 +86,7 @@ export type ThemeName =
   | "light-daltonized";
 
 function getConfig(): { theme?: ThemeName } {
-  const configPath = join(VEIN_BASE_DIR, "config.json");
+  const configPath = join(MILO_BASE_DIR, "config.json");
   if (!existsSync(configPath)) return {};
   try {
     return JSON.parse(readFileSync(configPath, "utf-8"));

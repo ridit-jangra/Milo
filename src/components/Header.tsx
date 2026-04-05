@@ -8,7 +8,7 @@ import { bullet, dot, lineVertical } from "../icons";
 import { cwd } from "process";
 
 const TIPS = [
-  "run /init to generate VEIN.md",
+  "run /init to generate MILO.md",
   "use /mode chat for read-only",
   "use /mode plan for big tasks",
   "esc to interrupt at any time",
@@ -19,7 +19,6 @@ const TIPS = [
 export function Header(): React.ReactNode {
   const { columns } = useTerminalSize();
   const tip = TIPS[Math.floor(Math.random() * TIPS.length)];
-  const dir = cwd();
 
   return (
     <Box
@@ -31,7 +30,6 @@ export function Header(): React.ReactNode {
       gap={2}
     >
       <Box
-        // flexDirection="column"
         borderStyle="round"
         borderColor={getTheme().border}
         paddingX={1}
@@ -39,10 +37,7 @@ export function Header(): React.ReactNode {
       >
         <Box flexDirection="column">
           <Text color={getTheme().secondaryText} dimColor>
-            {modelId} {bullet} agent mode
-          </Text>
-          <Text color={getTheme().secondaryText} dimColor>
-            {dir}
+            {modelId}
           </Text>
         </Box>
         <Box flexDirection="column" alignItems="center" paddingX={1}>

@@ -21,7 +21,7 @@ type QueuedCommand = {
   reject: (error: Error) => void;
 };
 
-const TEMPFILE_PREFIX = os.tmpdir() + "/vein-";
+const TEMPFILE_PREFIX = os.tmpdir() + "/milo-";
 const DEFAULT_TIMEOUT = 30 * 60 * 1000;
 const SIGTERM_CODE = 143;
 const FILE_SUFFIXES = {

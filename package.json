@@ -1,7 +1,10 @@
 {
-  "name": "vein",
+  "name": "milo",
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "start": "nodemon index.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/diff": "^8.0.0",

@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "vein-rewrite",
+      "name": "milo-rewrite",
       "dependencies": {
         "@ai-sdk/anthropic": "^3.0.66",
         "@ai-sdk/google": "^3.0.57",

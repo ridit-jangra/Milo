@@ -1,5 +1,5 @@
 export const DESCRIPTION =
-  "Search through past Vein session history to recall previous conversations, code decisions, or context.";
+  "Search through past Milo session history to recall previous conversations, code decisions, or context.";
 
 export const PROMPT = `Use this tool when the user references something from a previous session, asks what was discussed before, or needs context from past conversations.
 
