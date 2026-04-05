@@ -109,3 +109,14 @@ export type PermissionRequest = {
   toolName: string;
   input: unknown;
 };
+
+export interface Pet {
+  level: number;
+  xp: number;
+  xpToNext: number;
+  mood: "happy" | "sad" | "sleepy";
+  hunger: number;
+  streak: number;
+  lastActive: Date;
+  totalTasks: number;
+}

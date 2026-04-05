@@ -1,6 +1,6 @@
 import { runLLM } from "./llm";
 import type { StepToolCall, StepToolResult } from "../types";
-import { CHAT_SYSTEM_PROMPT } from "./systemPrompt";
+import { getChatSystemPrompt } from "./systemPrompt";
 import type { Session } from "./session";
 import { chatTools } from "./tools";
 
@@ -11,7 +11,7 @@ export async function chatWithModel(
   onToolResult?: (t: StepToolResult) => void,
 ) {
   return runLLM({
-    system: CHAT_SYSTEM_PROMPT,
+    system: await getChatSystemPrompt(),
     prompt,
     session,
     tools: chatTools,

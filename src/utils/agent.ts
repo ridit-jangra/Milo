@@ -1,6 +1,6 @@
 import { runLLM } from "./llm";
 import type { StepToolCall, StepToolResult } from "../types";
-import { AGENT_SYSTEM_PROMPT } from "./systemPrompt";
+import { getAgentSystemPrompt } from "./systemPrompt";
 import { agentTools } from "./tools";
 import type { Session } from "./session";
 
@@ -11,7 +11,7 @@ export async function createAgent(
   onToolResult?: (t: StepToolResult) => void,
 ) {
   return runLLM({
-    system: AGENT_SYSTEM_PROMPT,
+    system: await getAgentSystemPrompt(),
     prompt,
     session,
     tools: agentTools,

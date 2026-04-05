@@ -5,39 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { getTheme } from "../utils/theme";
 import { sample } from "lodash-es";
 import { cornerBottomLeft, line } from "../icons";
-
-const MESSAGES = [
-  "Sniffing… 🐱",
-  "Pawing… 🐾",
-  "Plotting… 😼",
-  "Pouncing… 🏹",
-  "Zooming… 💨",
-  "Grooming… 🧹",
-  "Judging… 😾",
-  "Purring… 😌",
-  "Staring… 👁️",
-  "Vibing… 🎵",
-  "We move 🫡",
-  "Cooking… 🍳",
-  "No cap 🧢",
-  "Fr fr 😭",
-  "Ate diff 🍽️",
-  "Slay mode 💅",
-  "Feral rn 🐈",
-  "Cat brain 🧠",
-  "Midnight mode 🌙",
-  "Box sitting 📦",
-  "Tail twitching 👀",
-  "Ears perked 📡",
-  "Claw sharpening ⚡",
-  "Napping… 💤",
-  "Paw paw 🐾",
-  "Meow meow 🐱",
-  "Understood 📋",
-  "Hairball incoming 💀",
-  "Touch grass? 🌿",
-  "Knocking over 🫡",
-];
+import { readPet, getSpinnerPool } from "../pet";
 
 const TIPS = [
   "use agent mode for file tasks",
@@ -54,9 +22,18 @@ const TIPS = [
 
 export function Spinner(): React.ReactNode {
   const [elapsedTime, setElapsedTime] = useState(0);
-  const message = useRef(sample(MESSAGES));
+  const message = useRef<string>("Sniffing… 🐱");
   const tip = useRef(sample(TIPS));
   const startTime = useRef(Date.now());
+
+  useEffect(() => {
+    readPet()
+      .then((pet) => {
+        const pool = getSpinnerPool(pet.level);
+        message.current = sample(pool) ?? "Sniffing… 🐱";
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -73,7 +50,7 @@ export function Spinner(): React.ReactNode {
             <InkSpinner type="star" />
           </Text>
         </Box>
-        <Text color={getTheme().primary}> {message.current}… </Text>
+        <Text color={getTheme().primary}> {message.current} </Text>
         <Text color={getTheme().secondaryText}>
           ({elapsedTime}s · <Text bold>esc</Text> to interrupt)
         </Text>

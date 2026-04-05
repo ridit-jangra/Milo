@@ -36,9 +36,7 @@ export function Header(): React.ReactNode {
         gap={1}
       >
         <Box flexDirection="column">
-          <Text color={getTheme().secondaryText} dimColor>
-            {modelId}
-          </Text>
+          <Text color={getTheme().secondaryText}>{modelId}</Text>
         </Box>
         <Box flexDirection="column" alignItems="center" paddingX={1}>
           <Text color={getTheme().border} dimColor>

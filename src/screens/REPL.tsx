@@ -1,5 +1,6 @@
 import React, { useState, type JSX } from "react";
 import { Box, Text, Static, useInput } from "ink";
+import { getHistory, addToHistory } from "../history";
 import TextInput from "../components/TextInput";
 import { Spinner } from "../components/Spinner";
 import { useTerminalSize } from "../hooks/useTerminalSize";
@@ -29,6 +30,9 @@ export default function REPL(): JSX.Element {
   const [value, setValue] = useState("");
   const [cursorOffset, setCursorOffset] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [history, setHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(0);
+  const [lastTypedInput, setLastTypedInput] = useState("");
   const {
     messages,
     loading,
@@ -42,6 +46,12 @@ export default function REPL(): JSX.Element {
 
   function onSubmit(input: string) {
     if (!input.trim() || loading) return;
+    addToHistory(input.trim()).catch(() => {});
+    setHistory((prev) =>
+      prev[0] === input.trim() ? prev : [input.trim(), ...prev].slice(0, 100),
+    );
+    setHistoryIndex(0);
+    setLastTypedInput("");
     submit(input);
     setValue("");
     setCursorOffset(0);
@@ -51,6 +61,44 @@ export default function REPL(): JSX.Element {
   React.useEffect(() => {
     setSelectedIndex(0);
   }, [value]);
+
+  React.useEffect(() => {
+    getHistory()
+      .then(setHistory)
+      .catch(() => {});
+  }, []);
+
+  function onHistoryUp() {
+    if (historyIndex < history.length) {
+      if (historyIndex === 0 && value.trim() !== "") {
+        setLastTypedInput(value);
+      }
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      const entry = history[historyIndex] ?? "";
+      setValue(entry);
+      setCursorOffset(entry.length);
+    }
+  }
+
+  function onHistoryDown() {
+    if (historyIndex > 1) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      const entry = history[newIndex - 1] ?? "";
+      setValue(entry);
+      setCursorOffset(entry.length);
+    } else if (historyIndex === 1) {
+      setHistoryIndex(0);
+      setValue(lastTypedInput);
+      setCursorOffset(lastTypedInput.length);
+    }
+  }
+
+  function onHistoryReset() {
+    setHistoryIndex(0);
+    setLastTypedInput("");
+  }
 
   useInput(
     (input, key) => {
@@ -187,6 +235,9 @@ export default function REPL(): JSX.Element {
               placeholder="ask milo anything..."
               isDimmed={loading}
               focus={!loading && !pendingPermission}
+              onHistoryUp={onHistoryUp}
+              onHistoryDown={onHistoryDown}
+              onHistoryReset={onHistoryReset}
             />
           </Box>
         )}

@@ -4,8 +4,10 @@ import help from "./commands/help";
 import mode from "./commands/mode";
 import init from "./commands/init";
 import genz from "./commands/genz";
+import pet from "./commands/pet";
+import feed from "./commands/feed";
 
-const COMMANDS: Command[] = [clear, help, mode, init, genz];
+const COMMANDS: Command[] = [clear, help, mode, init, genz, pet, feed];
 
 export function getCommands(): Command[] {
   return COMMANDS.filter((c) => c.isEnabled);

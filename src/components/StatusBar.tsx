@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Text } from "ink";
 import { getTheme } from "../utils/theme";
 import { useTerminalSize } from "../hooks/useTerminalSize";
 import type { Mode } from "../types";
-import { bullet, diamond, star } from "../icons";
+import { bullet, diamond, dot, star } from "../icons";
+import { readPet, renderXpBar } from "../pet";
+import type { Pet } from "../types";
 
 type Props = {
   model: string;
@@ -23,21 +25,40 @@ function getModeColor(mode: Mode): string {
 
 export function StatusBar({ model, mode }: Props): React.ReactNode {
   const { columns } = useTerminalSize();
+  const [pet, setPet] = useState<Pet | null>(null);
+
+  useEffect(() => {
+    readPet()
+      .then(setPet)
+      .catch(() => {});
+
+    const interval = setInterval(() => {
+      readPet()
+        .then(setPet)
+        .catch(() => {});
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const icon = mode === "agent" ? diamond : mode === "plan" ? star : bullet;
-  const left = ` ${model} `;
-  const right = ` ${icon} ${mode} mode `;
-  const padding = columns - left.length - right.length;
   const modeBg = getModeColor(mode);
 
+  const modelPart = ` ${model} `;
+  const modePart = ` ${icon} ${mode} mode `;
+
+  const levelPart = pet ? ` lv.${pet.level} ` : "";
+  const xpPart = pet ? ` ${pet.xp}/${pet.xpToNext}xp ` : "";
+
   return (
-    <Box width={columns}>
-      <Text color={getTheme().secondaryText}>{left}</Text>
-      <Text color={getTheme().secondaryText}>
-        {" ".repeat(Math.max(0, padding))}
-      </Text>
+    <Box width={columns} justifyContent="space-between">
+      <Box>
+        <Text color={getTheme().secondary}>{levelPart}</Text>
+        <Text>{dot}</Text>
+        <Text color={getTheme().success}>{xpPart}</Text>
+      </Box>
+      <Text color={getTheme().secondaryText}>{modelPart}</Text>
       <Text backgroundColor={modeBg} color="#000000">
-        {right}
+        {modePart}
       </Text>
     </Box>
   );

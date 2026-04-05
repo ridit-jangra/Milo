@@ -4,7 +4,7 @@ import type {
   StepToolCall,
   StepToolResult,
 } from "../types";
-import { PLAN_SYSTEM_PROMPT } from "./systemPrompt";
+import { getPlanSystemPrompt } from "./systemPrompt";
 import { createPlanTools } from "./tools";
 import type { Session } from "./session";
 
@@ -16,7 +16,7 @@ export async function planWithModel(
   onOrchestratorEvent?: OnOrchestratorEvent,
 ) {
   return runLLM({
-    system: PLAN_SYSTEM_PROMPT,
+    system: await getPlanSystemPrompt(),
     prompt,
     session,
     tools: createPlanTools(onOrchestratorEvent),

@@ -1,7 +1,6 @@
 import {
-  CONNECTOR_SYSTEM_PROMPT,
-  AGENT_SYSTEM_PROMPT,
-  ORCHESTRATOR_AGENT_SYSTEM_PROMPT,
+  getConnectorSystemPrompt,
+  getOrchestratorAgentSystemPrompt,
 } from "../../utils/systemPrompt";
 import { agentTools, orchestratorAgentTools } from "../../utils/tools";
 import { runLLM } from "../../utils/llm";
@@ -17,8 +16,8 @@ export async function spawnAgent(
 
   const system =
     mode === "connector"
-      ? CONNECTOR_SYSTEM_PROMPT
-      : ORCHESTRATOR_AGENT_SYSTEM_PROMPT;
+      ? await getConnectorSystemPrompt()
+      : await getOrchestratorAgentSystemPrompt();
 
   const tools =
     mode === "connector" ? orchestratorAgentTools : orchestratorAgentTools;

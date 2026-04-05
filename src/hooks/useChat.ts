@@ -4,6 +4,7 @@ import { createAgent } from "../utils/agent";
 import { planWithModel } from "../utils/plan";
 import { findCommand } from "../commands";
 import { onPermissionRequest, resolvePermission } from "../permissions";
+import { awardXP, getLevelFlavor, LEVEL_UP_MESSAGES } from "../pet";
 import type {
   Mode,
   ChatMessage,
@@ -157,6 +158,21 @@ export function useChat(initialMode: Mode = "agent") {
           toolName: string;
           output: unknown;
         }) => {
+          awardXP(toolResult.toolName)
+            .then(({ pet, leveledUp, oldLevel }) => {
+              if (leveledUp) {
+                const flavor = getLevelFlavor(pet.level);
+                const unlock = LEVEL_UP_MESSAGES[pet.level];
+                const lines = [
+                  `⚡ level up! milo is now level ${pet.level} 🐱`,
+                  flavor,
+                ];
+                if (unlock) lines.push(unlock);
+                pushMessage(lines.join("\n"));
+              }
+            })
+            .catch(() => {});
+
           setMessages((prev) =>
             prev.map((msg) =>
               msg.id === toolResult.id
@@ -174,7 +190,6 @@ export function useChat(initialMode: Mode = "agent") {
         };
 
         const actualPrompt = input;
-
         let text: string;
         let newSession: Session;
 
