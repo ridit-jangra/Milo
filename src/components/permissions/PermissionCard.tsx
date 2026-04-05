@@ -19,6 +19,8 @@ type Props = {
   onDecide: (decision: PermissionDecision) => void;
 };
 
+const MAX_DIFF_LINES = 10;
+
 const OPTIONS: { label: string; value: PermissionDecision }[] = [
   { label: "Yes", value: "allow" },
   {
@@ -40,7 +42,10 @@ function getFilePreview(toolName: string, input: unknown) {
   if (toolName === "FileWriteTool") {
     const content = String(a.content ?? "");
     if (!content) return null;
-    const lines = content.split("\n").map((l) => "+" + l);
+    const lines = content
+      .split("\n")
+      .slice(0, MAX_DIFF_LINES)
+      .map((l) => "+" + l);
     return {
       oldStart: 1,
       oldLines: 0,
@@ -54,7 +59,9 @@ function getFilePreview(toolName: string, input: unknown) {
     const patch = String(a.patch ?? "");
     if (!patch) return null;
     const parsed = parsePatch(patch);
-    return parsed[0]?.hunks[0] ?? null;
+    const hunk = parsed[0]?.hunks[0] ?? null;
+    if (hunk) hunk.lines = hunk.lines.slice(0, MAX_DIFF_LINES);
+    return hunk;
   }
 
   return null;

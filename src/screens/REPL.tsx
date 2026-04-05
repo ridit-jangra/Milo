@@ -228,30 +228,46 @@ export default function REPL(): JSX.Element {
 
       <Box flexDirection="column">
         <Text color={getTheme().border}>{line.repeat(columns)}</Text>
-        {pendingPermission ? (
-          <PermissionCard permission={pendingPermission} onDecide={decide} />
-        ) : pendingWizard ? (
-          <ProviderWizard mode={pendingWizard} onDone={closeWizard} />
-        ) : (
-          <Box paddingX={1}>
-            <Text color={getTheme().primary}>{pointer} </Text>
-            <TextInput
-              value={value}
-              onChange={setValue}
-              onSubmit={onSubmit}
-              onExit={() => process.exit(0)}
-              columns={columns - 6}
-              cursorOffset={cursorOffset}
-              onChangeCursorOffset={setCursorOffset}
-              placeholder="ask milo anything..."
-              isDimmed={loading}
-              focus={!loading && !pendingPermission && !pendingWizard}
-              onHistoryUp={onHistoryUp}
-              onHistoryDown={onHistoryDown}
-              onHistoryReset={onHistoryReset}
+
+        {/* stable height container — prevents flicker on mount/unmount */}
+        <Box
+          key="input-area"
+          minHeight={pendingPermission ? 10 : pendingWizard ? 10 : 3}
+        >
+          {pendingPermission ? (
+            <PermissionCard
+              key="permission"
+              permission={pendingPermission}
+              onDecide={decide}
             />
-          </Box>
-        )}
+          ) : pendingWizard ? (
+            <ProviderWizard
+              key="wizard"
+              mode={pendingWizard}
+              onDone={closeWizard}
+            />
+          ) : (
+            <Box paddingX={1}>
+              <Text color={getTheme().primary}>{pointer} </Text>
+              <TextInput
+                value={value}
+                onChange={setValue}
+                onSubmit={onSubmit}
+                onExit={() => process.exit(0)}
+                columns={columns - 6}
+                cursorOffset={cursorOffset}
+                onChangeCursorOffset={setCursorOffset}
+                placeholder="ask milo anything..."
+                isDimmed={loading}
+                focus={!loading && !pendingPermission && !pendingWizard}
+                onHistoryUp={onHistoryUp}
+                onHistoryDown={onHistoryDown}
+                onHistoryReset={onHistoryReset}
+              />
+            </Box>
+          )}
+        </Box>
+
         <Text color={getTheme().border}>{line.repeat(columns)}</Text>
         <CommandSuggestions query={value} selectedIndex={selectedIndex} />
         <StatusBar model={modelLabel} mode={mode} thinking={loading} />
