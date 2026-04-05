@@ -229,10 +229,9 @@ export default function REPL(): JSX.Element {
       <Box flexDirection="column">
         <Text color={getTheme().border}>{line.repeat(columns)}</Text>
 
-        {/* stable height container — prevents flicker on mount/unmount */}
         <Box
           key="input-area"
-          minHeight={pendingPermission ? 10 : pendingWizard ? 10 : 3}
+          // minHeight={pendingPermission ? 10 : pendingWizard ? 10 : 3}
         >
           {pendingPermission ? (
             <PermissionCard
