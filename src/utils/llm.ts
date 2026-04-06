@@ -6,15 +6,26 @@ import {
   loadMemoryIntoSession,
   saveSession,
 } from "./session";
-import { shouldCompact, compactSession } from "./compaction";
 import type { LLMOptions } from "../types";
+import { estimateTokens, shouldCompact } from "./compaction";
+
+export const maxSteps: Record<
+  "chat" | "agent" | "plan" | "subagent" | "orchestratorAgent",
+  number
+> = {
+  chat: 100,
+  agent: 200,
+  plan: 400,
+  orchestratorAgent: 100,
+  subagent: 100,
+};
 
 export async function runLLM({
   system,
   tools,
   session,
   prompt,
-  maxSteps = 10,
+  mode = "agent",
   onToolCall,
   onToolResult,
 }: LLMOptions): Promise<{ text: string; session: Session }> {
@@ -22,21 +33,28 @@ export async function runLLM({
   loadMemoryIntoSession(activeSession);
 
   if (shouldCompact(activeSession)) {
-    try {
-      activeSession = await compactSession(activeSession);
-      saveSession(activeSession);
-    } catch {}
+    activeSession.messages.push({
+      role: "user",
+      content:
+        "Your context is very long. Call CompactTool now with a full summary before doing anything else.",
+    });
   }
 
   activeSession.messages.push({ role: "user", content: prompt });
 
-  const { model, modelId } = await getModel();
+  const { model } = await getModel();
+
+  const tokenCount = estimateTokens(activeSession.messages);
+
+  const steps = maxSteps[mode];
 
   const result = await generateText({
     model,
-    system,
+    system:
+      system +
+      `\n\n# Context usage\nTokens used so far: ~${tokenCount}. If this exceeds 60,000, call CompactTool immediately.`,
     messages: activeSession.messages,
-    ...(tools ? { tools, stopWhen: stepCountIs(maxSteps) } : {}),
+    ...(tools ? { tools, stopWhen: stepCountIs(steps) } : {}),
     onStepFinish: ({ toolCalls, toolResults }) => {
       for (const toolCall of toolCalls ?? []) {
         onToolCall?.({

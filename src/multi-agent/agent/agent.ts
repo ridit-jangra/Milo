@@ -26,6 +26,7 @@ export async function spawnAgent(
     system,
     prompt: subtask,
     tools,
+    mode: "orchestratorAgent",
   });
 
   onEvent?.({ type: "agent_done", taskId: taskId ?? "?", result: text });

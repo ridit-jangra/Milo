@@ -61,7 +61,7 @@ export type LLMOptions = {
   tools?: ToolSet;
   session?: Session;
   prompt: string;
-  maxSteps?: number;
+  mode?: "chat" | "agent" | "plan" | "subagent" | "orchestratorAgent";
   onToolCall?: (toolCall: StepToolCall) => void;
   onToolResult?: (toolResult: StepToolResult) => void;
   onOrchestratorEvent?: OnOrchestratorEvent;

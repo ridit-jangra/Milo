@@ -5,7 +5,7 @@ import type {
   StepToolResult,
 } from "../types";
 import { getPlanSystemPrompt } from "./systemPrompt";
-import { createPlanTools } from "./tools";
+import { createPlanTools, withCompact } from "./tools";
 import type { Session } from "./session";
 
 export async function planWithModel(
@@ -14,12 +14,18 @@ export async function planWithModel(
   onToolCall?: (t: StepToolCall) => void,
   onToolResult?: (t: StepToolResult) => void,
   onOrchestratorEvent?: OnOrchestratorEvent,
+  onCompact?: (s: Session) => void,
 ) {
+  const planTools = createPlanTools(onOrchestratorEvent);
   return runLLM({
     system: await getPlanSystemPrompt(),
     prompt,
     session,
-    tools: createPlanTools(onOrchestratorEvent),
+    mode: "plan",
+    tools:
+      session && onCompact
+        ? withCompact(planTools, session, onCompact)
+        : planTools,
     onToolCall,
     onToolResult,
   });

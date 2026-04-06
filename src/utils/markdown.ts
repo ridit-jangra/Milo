@@ -4,6 +4,7 @@ import chalk from "chalk";
 import { EOL } from "os";
 import { highlight, supportsLanguage } from "cli-highlight";
 import { cornerTopLeft, cornerBottomLeft, lineVertical, line } from "../icons";
+import { getTheme } from "./theme";
 
 const STRIPPED_TAGS = [
   "commit_analysis",
@@ -11,6 +12,30 @@ const STRIPPED_TAGS = [
   "function_analysis",
   "pr_analysis",
 ];
+
+const CODE_THEME = {
+  keyword: chalk.hex("#7FBEB3"),
+  built_in: chalk.hex("#78B8B5"),
+  string: chalk.hex("#C48DBE"),
+  number: chalk.hex("#C8B07A"),
+  comment: chalk.hex("#6A6A6A").italic,
+  function: chalk.hex("#D3A06F"),
+  title: chalk.hex("#D3A06F"),
+  params: chalk.hex("#D6B66A"),
+  attr: chalk.hex("#9A8FD6"),
+  class: chalk.hex("#7FB0D9"),
+  type: chalk.hex("#7FB0D9"),
+  literal: chalk.hex("#78B8B5"),
+  regexp: chalk.hex("#BFBFC6"),
+  tag: chalk.hex("#C26A72"),
+  name: chalk.hex("#7FBEB3"),
+  meta: chalk.hex("#D6B66A"),
+  symbol: chalk.hex("#9D92D9"),
+  subst: chalk.hex("#CFCFD6"),
+  section: chalk.hex("#D3A06F"),
+  bullet: chalk.hex("#D6B66A"),
+  default: chalk.hex("#CFCFD6"),
+};
 
 export function stripSystemMessages(content: string): string {
   const regex = new RegExp(`<(${STRIPPED_TAGS.join("|")})>.*?</\\1>\n?`, "gs");
@@ -26,18 +51,26 @@ export function applyMarkdown(content: string): string {
 }
 
 function formatCodeBlock(text: string, lang?: string): string {
+  const theme = getTheme();
   const highlighted =
     lang && supportsLanguage(lang)
-      ? highlight(text, { language: lang })
-      : highlight(text, { language: "markdown" });
+      ? highlight(text, { language: lang, theme: CODE_THEME })
+      : highlight(text, { language: "markdown", theme: CODE_THEME });
 
   const lines = highlighted.split("\n");
-  const top =
-    chalk.dim(cornerTopLeft + line) + (lang ? chalk.dim(` ${lang}`) : "");
-  const body = lines.map((l) => chalk.dim(lineVertical + " ") + l).join(EOL);
-  const bottom = chalk.dim(cornerBottomLeft + line);
 
-  return top + EOL + body + EOL + bottom + EOL;
+  const top =
+    chalk.hex(theme.primary)(cornerTopLeft + line + line + line) +
+    (lang ? chalk.hex(theme.primary).bold(` ${lang} `) : "") +
+    chalk.hex(theme.primary)(line.repeat(20));
+
+  const body = lines
+    .map((l) => chalk.hex(theme.primary)(lineVertical) + " " + l)
+    .join(EOL);
+
+  const bottom = chalk.hex(theme.primary)(cornerBottomLeft + line.repeat(24));
+
+  return EOL + top + EOL + body + EOL + bottom + EOL;
 }
 
 function format(
@@ -46,15 +79,16 @@ function format(
   orderedListNumber: number | null = null,
   parent: Token | null = null,
 ): string {
+  const theme = getTheme();
   switch (token.type) {
     case "blockquote":
-      return chalk.dim.italic(
-        (token.tokens ?? []).map((_) => format(_)).join(""),
-      );
+      return chalk
+        .hex(theme.secondaryText)
+        .italic((token.tokens ?? []).map((_) => format(_)).join(""));
     case "code":
       return formatCodeBlock(token.text, token.lang);
     case "codespan":
-      return chalk.blue(token.text);
+      return chalk.hex("#C48DBE")(token.text);
     case "em":
       return chalk.italic((token.tokens ?? []).map((_) => format(_)).join(""));
     case "strong":
@@ -63,33 +97,39 @@ function format(
       switch (token.depth) {
         case 1:
           return (
-            chalk.bold.italic.underline(
-              (token.tokens ?? []).map((_) => format(_)).join(""),
-            ) +
+            chalk
+              .hex(theme.primary)
+              .bold.italic.underline(
+                (token.tokens ?? []).map((_) => format(_)).join(""),
+              ) +
             EOL +
             EOL
           );
         case 2:
           return (
-            chalk.bold((token.tokens ?? []).map((_) => format(_)).join("")) +
+            chalk
+              .hex(theme.secondary)
+              .bold((token.tokens ?? []).map((_) => format(_)).join("")) +
             EOL +
             EOL
           );
         default:
           return (
-            chalk.bold.dim(
-              (token.tokens ?? []).map((_) => format(_)).join(""),
-            ) +
+            chalk
+              .hex(theme.secondaryText)
+              .bold((token.tokens ?? []).map((_) => format(_)).join("")) +
             EOL +
             EOL
           );
       }
     case "hr":
-      return "---";
+      return chalk.hex(theme.secondaryBorder)("─".repeat(40)) + EOL;
     case "image":
-      return `[Image: ${token.title}: ${token.href}]`;
+      return chalk.hex(theme.secondaryText)(
+        `[Image: ${token.title}: ${token.href}]`,
+      );
     case "link":
-      return chalk.blue(token.href);
+      return chalk.hex(theme.secondary).underline(token.href);
     case "list": {
       return token.items
         .map((_: Token, index: number) =>
@@ -115,7 +155,13 @@ function format(
       return EOL;
     case "text":
       if (parent?.type === "list_item") {
-        return `${orderedListNumber === null ? "-" : getListNumber(listDepth, orderedListNumber) + "."} ${token.tokens ? token.tokens.map((_) => format(_, listDepth, orderedListNumber, token)).join("") : token.text}${EOL}`;
+        const bullet =
+          orderedListNumber === null
+            ? chalk.hex(theme.primary)("-")
+            : chalk.hex(theme.primary)(
+                getListNumber(listDepth, orderedListNumber) + ".",
+              );
+        return `${bullet} ${token.tokens ? token.tokens.map((_) => format(_, listDepth, orderedListNumber, token)).join("") : token.text}${EOL}`;
       } else {
         return token.text;
       }
@@ -136,11 +182,13 @@ function format(
       const formatRow = (cells: string[]) =>
         cells.map((c, i) => c.padEnd(colWidths[i] ?? 0)).join("  ");
 
-      const header = chalk.bold(formatRow(headers));
-      const separator = colWidths.map((w: number) => "─".repeat(w)).join("  ");
+      const header = chalk.hex(theme.primary).bold(formatRow(headers));
+      const separator = chalk.hex(theme.secondaryBorder)(
+        colWidths.map((w: number) => "─".repeat(w)).join("  "),
+      );
       const body = rows.map((r: string[]) => formatRow(r)).join(EOL);
 
-      return header + EOL + chalk.dim(separator) + EOL + body + EOL;
+      return header + EOL + separator + EOL + body + EOL;
     }
   }
   return "";

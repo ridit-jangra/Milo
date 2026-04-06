@@ -26,7 +26,12 @@ export function useChat(initialMode: Mode = "agent") {
     useState<PermissionRequest | null>(null);
   const [pendingWizard, setPendingWizard] = useState<WizardMode | null>(null);
   const modeRef = useRef<Mode>(initialMode);
+  const sessionRef = useRef<Session | undefined>(undefined);
   const abortControllerRef = useRef<AbortController>(new AbortController());
+
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
 
   const setMode = useCallback((m: Mode) => {
     modeRef.current = m;
@@ -36,6 +41,7 @@ export function useChat(initialMode: Mode = "agent") {
   const clearMessages = useCallback(() => {
     setMessages([]);
     setSession(undefined);
+    sessionRef.current = undefined;
   }, []);
 
   const pushMessage = useCallback((text: string) => {
@@ -44,6 +50,15 @@ export function useChat(initialMode: Mode = "agent") {
       { id: crypto.randomUUID(), type: "assistant", text },
     ]);
   }, []);
+
+  const onCompact = useCallback(
+    (compacted: Session) => {
+      setSession(compacted);
+      sessionRef.current = compacted;
+      pushMessage("🗜 Context compacted. Continuing from summary.");
+    },
+    [pushMessage],
+  );
 
   useEffect(() => {
     const unsub = onPermissionRequest((p) => {
@@ -202,34 +217,41 @@ export function useChat(initialMode: Mode = "agent") {
           );
         };
 
-        const actualPrompt = input;
-        let text: string;
-        let newSession: Session;
-
         const currentMode = modeRef.current;
+        const currentSession = sessionRef.current;
+
         const result =
           currentMode === "plan"
             ? await planWithModel(
-                actualPrompt,
-                session,
+                input,
+                currentSession,
                 onToolCall,
                 onToolResult,
                 handleOrchestratorEvent,
+                onCompact,
               )
-            : await (currentMode === "chat" ? chatWithModel : createAgent)(
-                actualPrompt,
-                session,
-                onToolCall,
-                onToolResult,
-              );
-        text = result.text;
-        newSession = result.session;
+            : currentMode === "chat"
+              ? await chatWithModel(
+                  input,
+                  currentSession,
+                  onToolCall,
+                  onToolResult,
+                  onCompact,
+                )
+              : await createAgent(
+                  input,
+                  currentSession,
+                  onToolCall,
+                  onToolResult,
+                  onCompact,
+                );
 
         setMessages((prev) => [
           ...prev,
-          { id: crypto.randomUUID(), type: "assistant", text },
+          { id: crypto.randomUUID(), type: "assistant", text: result.text },
         ]);
-        setSession(newSession);
+        setSession(result.session);
+        sessionRef.current = result.session;
       } catch (err) {
         setMessages((prev) => [
           ...prev,
@@ -252,6 +274,7 @@ export function useChat(initialMode: Mode = "agent") {
       setMode,
       pushMessage,
       handleOrchestratorEvent,
+      onCompact,
     ],
   );
 

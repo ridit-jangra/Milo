@@ -9,6 +9,7 @@ export type Session = {
   memoryLoaded: boolean;
   createdAt: number;
   updatedAt: number;
+  compacted?: boolean;
 };
 
 export function createSession(id?: string): Session {

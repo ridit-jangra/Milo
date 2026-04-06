@@ -1,8 +1,7 @@
-// src/utils/PersistentShell.ts
 import * as fs from "fs";
 import { homedir } from "os";
 import { existsSync } from "fs";
-import { spawn, execSync, type ChildProcess } from "child_process";
+import { spawn, type ChildProcess } from "child_process";
 import { isAbsolute, resolve, join } from "path";
 import * as os from "os";
 
@@ -47,6 +46,7 @@ export class PersistentShell {
   private cwdFile: string;
   private cwd: string;
   private binShell: string;
+  private activeChild: ChildProcess | null = null;
 
   constructor(cwd: string) {
     this.binShell =
@@ -120,27 +120,30 @@ export class PersistentShell {
   }
 
   killChildren() {
-    const parentPid = this.shell.pid;
-    if (!parentPid) return;
-    try {
-      if (process.platform === "win32") {
-        execSync(`taskkill /F /T /PID ${parentPid}`, { stdio: "ignore" });
-      } else {
+    if (process.platform === "win32") {
+      if (this.activeChild?.pid) {
+        spawn("taskkill", ["/F", "/T", "/PID", String(this.activeChild.pid)], {
+          stdio: "ignore",
+        });
+      }
+    } else {
+      const parentPid = this.shell.pid;
+      if (!parentPid) return;
+      try {
+        const { execSync } = require("child_process");
         const childPids = execSync(`pgrep -P ${parentPid}`)
           .toString()
           .trim()
           .split("\n")
           .filter(Boolean);
-        childPids.forEach((pid) => {
+        childPids.forEach((pid: string) => {
           try {
             process.kill(Number(pid), "SIGTERM");
           } catch {}
         });
-      }
-    } catch {
-    } finally {
-      this.commandInterrupted = true;
+      } catch {}
     }
+    this.commandInterrupted = true;
   }
 
   private async processQueue() {
@@ -178,7 +181,6 @@ export class PersistentShell {
     });
   }
 
-  // simple wrapper for BashTool
   async execute(command: string, timeout?: number): Promise<string> {
     const result = await this.exec(command, undefined, timeout);
     const combined = [result.stdout, result.stderr].filter(Boolean).join("\n");
@@ -251,32 +253,48 @@ export class PersistentShell {
     timeout: number,
   ): Promise<ExecResult> {
     return new Promise((resolve) => {
-      const start = Date.now();
-      try {
-        const result = execSync(command, {
-          timeout,
-          encoding: "utf8",
-          cwd: this.cwd,
-          env: process.env,
+      let stdout = "";
+      let stderr = "";
+
+      const child = spawn("cmd.exe", ["/c", command], {
+        cwd: this.cwd,
+        env: process.env,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+
+      this.activeChild = child;
+
+      child.stdout?.on("data", (d) => (stdout += d.toString()));
+      child.stderr?.on("data", (d) => (stderr += d.toString()));
+
+      const timer = setTimeout(() => {
+        this.killChildren();
+        resolve({
+          stdout,
+          stderr: stderr + "\nCommand timed out",
+          code: SIGTERM_CODE,
+          interrupted: true,
         });
-        resolve({ stdout: result, stderr: "", code: 0, interrupted: false });
-      } catch (err: any) {
-        if (Date.now() - start >= timeout) {
-          resolve({
-            stdout: "",
-            stderr: "Command timed out",
-            code: SIGTERM_CODE,
-            interrupted: true,
-          });
-        } else {
-          resolve({
-            stdout: err.stdout || "",
-            stderr: err.stderr || String(err),
-            code: err.status ?? 1,
-            interrupted: false,
-          });
-        }
-      }
+      }, timeout);
+
+      child.on("close", (code) => {
+        clearTimeout(timer);
+        this.activeChild = null;
+        // update cwd after command
+        try {
+          const newCwd = require("child_process")
+            .execSync("cd", { cwd: this.cwd, encoding: "utf8" })
+            .trim();
+          if (newCwd) this.cwd = newCwd;
+        } catch {}
+        resolve({ stdout, stderr, code: code ?? 0, interrupted: false });
+      });
+
+      child.on("error", (err) => {
+        clearTimeout(timer);
+        this.activeChild = null;
+        resolve({ stdout, stderr: String(err), code: 1, interrupted: false });
+      });
     });
   }
 
