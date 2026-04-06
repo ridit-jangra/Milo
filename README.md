@@ -100,6 +100,15 @@ Milo has a pet system. every tool call earns XP. level up to unlock commands and
 - level 10 — `/crimes` unlocked
 - level 6+ — full feral mode
 
+**4 evolution stages** — milo's ASCII art, colors, and personality change as you level up:
+
+| stage     | levels | vibe                    |
+| --------- | ------ | ----------------------- |
+| kitten    | 1–4    | just getting started 🐱 |
+| teen      | 5–9    | getting dangerous 😼    |
+| adult     | 10–14  | absolute unit 😤        |
+| legendary | 15+    | feared by dogs 👑       |
+
 milo gets hungry over time. run `/feed` or it gets sad.
 
 ---
