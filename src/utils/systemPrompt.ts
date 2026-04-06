@@ -73,6 +73,7 @@ const TOOL_RULES = `
   - After writing a file, do not read it back to verify — trust the write succeeded.
   - After moving a file to a new location, always delete the original using BashTool.
   - After any refactor or restructure, always run the build command and verify it compiles before finishing.
+  - Use ReadManyFilesTool instead of calling FileReadTool multiple times — batch all reads into a single call.
   
   # Searching
   - GrepTool searches FILE CONTENTS for a pattern. It is NOT for finding files by name.
@@ -89,6 +90,7 @@ const TOOL_RULES = `
   - Never use banned commands: curl, wget, nc, telnet, etc.
   - Chain commands with && or ;, never newlines.
   - Do not install packages unless explicitly asked.
+  - Never use mkdir -p on any platform — on Windows it creates a "-p" folder. Use plain "mkdir" on Windows, "mkdir -p" only on unix.
   
   # Git
   - When asked for a commit message, ALWAYS run git status and git diff first before generating one.
@@ -129,7 +131,7 @@ export async function getChatSystemPrompt(): Promise<string> {
 
 # Mode: Chat
 You answer questions about code, explain concepts, and help developers think through problems.
-You have access to exactly these tools: RecallTool, FileReadTool, GrepTool, MemoryReadTool, WebSearchTool, WebFetchTool, CompactTool.
+You have access to exactly these tools: RecallTool, FileReadTool, GrepTool, MemoryReadTool, WebSearchTool, WebFetchTool, CompactTool, ReadManyFileTool.
 
 # Tool usage
 - Use RecallTool when the user references something from a previous session ("last time", "remember when", "what did we discuss", "before") or when you lack context that seems like it should exist from prior work.
@@ -146,7 +148,7 @@ export async function getAgentSystemPrompt(): Promise<string> {
   return `${base}
 
 # Mode: Agent
-You have access to exactly these tools: FileReadTool, FileWriteTool, FileEditTool, BashTool, GrepTool, AgentTool, ThinkTool, GlobTool, RecallTool, MemoryReadTool, MemoryWriteTool, MemoryEditTool, WebSearchTool, WebFetchTool, CompactTool.
+You have access to exactly these tools: FileReadTool, ReadManyFilesTool, FileWriteTool, FileEditTool, BashTool, GrepTool, AgentTool, ThinkTool, GlobTool, RecallTool, MemoryReadTool, MemoryWriteTool, MemoryEditTool, WebSearchTool, WebFetchTool, CompactTool.
 ${TOOL_RULES}
 
 # Memory & Recall
@@ -203,15 +205,15 @@ export async function getConnectorSystemPrompt(): Promise<string> {
 # Mode: Connector
 You are wiring together files that have already been created by other agents.
 
-You have access to: FileReadTool, FileWriteTool, FileEditTool, BashTool.
+You have access to: FileReadTool, GrepTool, GlobTool, BashTool, ThinkTool.
 
 Your job:
 - Read the files listed in the manifest
-- Fix broken imports and path mismatches
-- Ensure consistency across files (JS vs TS, require vs import)
-- Do not create new files unless absolutely necessary
-- Do not delegate to any other tool
-- Edit files directly and give a one-line summary when done.`;
+- Fix broken imports and path mismatches only — use FileEditTool via BashTool if absolutely needed
+- Do NOT create new files
+- Do NOT rewrite existing files from scratch
+- Do NOT delegate to any other tool
+- Make the smallest possible edits and give a one-line summary when done.`;
 }
 
 export async function getOrchestratorAgentSystemPrompt(): Promise<string> {

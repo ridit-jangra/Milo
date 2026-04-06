@@ -4,7 +4,7 @@ import { getTheme } from "../utils/theme";
 import { useTerminalSize } from "../hooks/useTerminalSize";
 import type { Mode } from "../types";
 import { bullet, diamond, star } from "../icons";
-import { readPet } from "../pet";
+import { readPet, getStageColor, getPetStage, type PetStage } from "../pet";
 import type { Pet } from "../types";
 import Spinner from "ink-spinner";
 
@@ -14,7 +14,8 @@ type Props = {
   thinking: boolean;
 };
 
-function getModeColor(mode: Mode): string {
+function getModeColor(mode: Mode, stage: PetStage): string {
+  if (stage === "legendary" && mode === "agent") return "#ffd700";
   switch (mode) {
     case "agent":
       return getTheme().secondary;
@@ -37,7 +38,6 @@ export function StatusBar({
     readPet()
       .then(setPet)
       .catch(() => {});
-
     const interval = setInterval(() => {
       readPet()
         .then(setPet)
@@ -47,13 +47,17 @@ export function StatusBar({
   }, []);
 
   const icon = mode === "agent" ? diamond : mode === "plan" ? star : bullet;
-  const modeBg = getModeColor(mode);
 
   const modelPart = ` ${model} `;
   const modePart = ` ${icon} ${mode} mode `;
-
   const levelPart = pet ? ` lv.${pet.level} ` : "";
   const xpPart = pet ? ` ${pet.xp}/${pet.xpToNext}xp ` : "";
+
+  const stageColor = pet ? getStageColor(pet.level) : getTheme().error;
+  const stage = pet ? getPetStage(pet.level) : "kitten";
+  const levelIcon = stage === "legendary" ? "👑" : star;
+
+  const modeBg = getModeColor(mode, stage);
 
   return (
     <Box width={columns} justifyContent="space-between">
@@ -61,13 +65,13 @@ export function StatusBar({
         {thinking ? (
           <Box>
             <Spinner type="bluePulse" />
-            <Text>Thinking</Text>
+            <Text> Thinking</Text>
           </Box>
         ) : (
           <>
             <Box>
-              <Text color={getTheme().error}>{star}</Text>
-              <Text color={getTheme().secondary}>{levelPart}</Text>
+              <Text color={stageColor}>{levelIcon}</Text>
+              <Text color={stageColor}>{levelPart}</Text>
             </Box>
             <Box>
               <Text color={getTheme().warning}>{diamond}</Text>

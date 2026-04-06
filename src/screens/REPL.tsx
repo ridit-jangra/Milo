@@ -1,4 +1,4 @@
-import React, { useState, type JSX } from "react";
+import React, { useState, useEffect, type JSX } from "react";
 import { Box, Text, Static, useInput } from "ink";
 import { getHistory, addToHistory } from "../history";
 import TextInput from "../components/TextInput";
@@ -18,12 +18,25 @@ import type { ChatMessage } from "../types";
 import { StatusBar } from "../components/StatusBar";
 import { findShortcut } from "../shortcuts";
 import { PermissionCard } from "../components/permissions/PermissionCard";
+import { readPetSync } from "../pet";
 
-const HEADER_ITEM = [{ id: "header", type: "header" as const }];
+type SubtoolMessage = Extract<
+  ChatMessage,
+  { type: "tool_call" | "tool_result" }
+>;
 
 type StaticItem =
-  | { id: string; type: "header" }
-  | { id: string; type: "message"; msg: ChatMessage; index: number };
+  | { id: string; type: "header"; level: number }
+  | { id: string; type: "message"; msg: ChatMessage; index: number }
+  | {
+      id: string;
+      type: "agent_snapshot";
+      msg: ChatMessage;
+      task: string;
+      subtools: SubtoolMessage[];
+    };
+
+const INITIAL_PET_LEVEL = readPetSync().level;
 
 export default function REPL(): JSX.Element {
   const { columns } = useTerminalSize();
@@ -34,6 +47,8 @@ export default function REPL(): JSX.Element {
   const [historyIndex, setHistoryIndex] = useState(0);
   const [lastTypedInput, setLastTypedInput] = useState("");
   const [modelLabel, setModelLabel] = useState("no model");
+  const [petLevel] = useState(INITIAL_PET_LEVEL);
+
   const {
     messages,
     loading,
@@ -138,101 +153,176 @@ export default function REPL(): JSX.Element {
     { isActive: !loading },
   );
 
-  const staticMessages = messages.filter(
-    (m) => !(m.type === "tool_call" && (m as any).isOrchestrated),
+  const subagentByTask = messages.reduce<Record<string, SubtoolMessage[]>>(
+    (acc, m) => {
+      if (
+        (m.type === "tool_call" || m.type === "tool_result") &&
+        m.isOrchestrated &&
+        m.taskId
+      ) {
+        acc[m.taskId] = [...(acc[m.taskId] ?? []), m];
+      }
+      return acc;
+    },
+    {},
   );
 
-  const orchestratedMessages = messages.filter(
-    (m) =>
-      (m.type === "tool_call" || m.type === "tool_result") &&
-      (m as any).isOrchestrated,
+  const runningAgents = messages.filter(
+    (m): m is Extract<ChatMessage, { type: "tool_call" }> =>
+      m.id.startsWith("agent-") && m.type === "tool_call",
   );
 
-  const orchestratedDone = orchestratedMessages.filter(
-    (m) => m.type === "tool_result",
+  let baseIndex = 0;
+  const headerItem: StaticItem = {
+    id: "header",
+    type: "header",
+    level: petLevel,
+  };
+
+  const staticItems: StaticItem[] = messages.reduce<StaticItem[]>(
+    (acc, m) => {
+      if (
+        (m.type === "tool_call" || m.type === "tool_result") &&
+        m.isOrchestrated
+      ) {
+        return acc;
+      }
+      if (m.id.startsWith("agent-") && m.type === "tool_call") {
+        return acc;
+      }
+      if (m.id.startsWith("agent-") && m.type === "tool_result") {
+        const taskId = m.id.replace("agent-", "");
+        const task = String(
+          (m.input as { task?: string } | undefined)?.task ?? "",
+        );
+        return [
+          ...acc,
+          {
+            id: m.id,
+            type: "agent_snapshot" as const,
+            msg: m,
+            task,
+            subtools: subagentByTask[taskId] ?? [],
+          },
+        ];
+      }
+      return [
+        ...acc,
+        { id: m.id, type: "message" as const, msg: m, index: baseIndex++ },
+      ];
+    },
+    [headerItem],
   );
-
-  const orchestratedTotal = messages.filter(
-    (m) => m.type === "tool_call" && (m as any).isOrchestrated,
-  );
-
-  const isOrchestrating = orchestratedTotal.length > 0 && loading;
-
-  const staticItems: StaticItem[] = [
-    ...HEADER_ITEM,
-    ...staticMessages.map((msg, index) => ({
-      id: msg.id,
-      type: "message" as const,
-      msg,
-      index,
-    })),
-  ];
-
-  const orchestratorHeight = isOrchestrating
-    ? orchestratedTotal.slice(-4).length + 1
-    : 0;
 
   return (
     <Box flexDirection="column" height="100%">
       <Static items={staticItems}>
         {(item) => {
-          if (item.type === "header") return <Header key="header" />;
+          if (item.type === "header")
+            return <Header key="header" level={item.level} />;
+          if (item.type === "agent_snapshot") {
+            return (
+              <Box key={item.id} flexDirection="column" marginBottom={1}>
+                <Box flexDirection="row" gap={1}>
+                  <Text color={getTheme().success}>✔</Text>
+                  <Text color={getTheme().secondaryText}>{item.task}</Text>
+                </Box>
+                {item.subtools.map((sub) => {
+                  const preview =
+                    sub.type === "tool_call"
+                      ? String(JSON.stringify(sub.input ?? "")).slice(
+                          0,
+                          columns - 24,
+                        )
+                      : String(JSON.stringify(sub.output ?? "")).slice(
+                          0,
+                          columns - 24,
+                        );
+                  return (
+                    <Box
+                      key={sub.id}
+                      flexDirection="row"
+                      gap={1}
+                      marginLeft={2}
+                    >
+                      <Text color={getTheme().secondaryText} dimColor>
+                        {"╰─"}
+                      </Text>
+                      <Text color={getTheme().primary}>{"★"}</Text>
+                      <Text color={getTheme().secondaryText} dimColor>
+                        {sub.toolName} {"·"} {preview}
+                      </Text>
+                    </Box>
+                  );
+                })}
+              </Box>
+            );
+          }
           return (
-            <Message key={item.id} msg={item.msg} isFirst={item.index === 0} />
+            <Box key={item.id} flexDirection="column">
+              <Message msg={item.msg} isFirst={item.index === 0} />
+            </Box>
           );
         }}
       </Static>
 
-      <Box
-        flexDirection="column"
-        marginLeft={2}
-        minHeight={orchestratorHeight}
-        marginTop={isOrchestrating ? 1 : 0}
-      >
-        {isOrchestrating && (
-          <>
-            <Text color={getTheme().primary}>
-              ⚡ agents{" "}
-              <Text color={getTheme().success}>{orchestratedDone.length}</Text>
-              <Text color={getTheme().secondaryText}>
-                /{orchestratedTotal.length} done
-              </Text>
-            </Text>
-            {orchestratedTotal.slice(-4).map((m) => {
-              const isDone = orchestratedMessages.some(
-                (r) => r.type === "tool_result" && r.id === m.id,
-              );
-              const task = String(
-                (m.type === "tool_call" ? (m.input as any)?.task : "") ?? "",
-              ).slice(0, columns - 12);
-              return (
-                <Box key={m.id} flexDirection="row" gap={1}>
-                  <Text
-                    color={
-                      isDone ? getTheme().success : getTheme().secondaryText
-                    }
-                  >
-                    {isDone ? "✔" : "◆"}
-                  </Text>
+      {runningAgents.length > 0 && (
+        <Box flexDirection="column" marginLeft={2} marginTop={1}>
+          {runningAgents.map((agent) => {
+            const taskId = agent.id.replace("agent-", "");
+            const task = String(
+              (agent.input as { task?: string } | undefined)?.task ?? "",
+            ).slice(0, columns - 12);
+            const subtools = subagentByTask[taskId] ?? [];
+            const visibleSubtools = subtools.slice(-3);
+
+            return (
+              <Box key={agent.id} flexDirection="column" marginBottom={1}>
+                <Box flexDirection="row" gap={1}>
+                  <Text color={getTheme().secondaryText}>{"◆"}</Text>
                   <Text color={getTheme().secondaryText} dimColor>
                     {task}
                   </Text>
                 </Box>
-              );
-            })}
-          </>
-        )}
-      </Box>
+                {visibleSubtools.map((sub) => {
+                  const preview =
+                    sub.type === "tool_call"
+                      ? String(JSON.stringify(sub.input ?? "")).slice(
+                          0,
+                          columns - 24,
+                        )
+                      : String(JSON.stringify(sub.output ?? "")).slice(
+                          0,
+                          columns - 24,
+                        );
+                  return (
+                    <Box
+                      key={sub.id}
+                      flexDirection="row"
+                      gap={1}
+                      marginLeft={2}
+                    >
+                      <Text color={getTheme().secondaryText} dimColor>
+                        {"╰─"}
+                      </Text>
+                      <Text color={getTheme().primary}>{"★"}</Text>
+                      <Text color={getTheme().secondaryText} dimColor>
+                        {sub.toolName} {"·"} {preview}
+                      </Text>
+                    </Box>
+                  );
+                })}
+              </Box>
+            );
+          })}
+        </Box>
+      )}
 
       <Box minHeight={2}>{loading && <Spinner />}</Box>
 
       <Box flexDirection="column">
         <Text color={getTheme().border}>{line.repeat(columns)}</Text>
-
-        <Box
-          key="input-area"
-          // minHeight={pendingPermission ? 10 : pendingWizard ? 10 : 3}
-        >
+        <Box key="input-area">
           {pendingPermission ? (
             <PermissionCard
               key="permission"
@@ -266,7 +356,6 @@ export default function REPL(): JSX.Element {
             </Box>
           )}
         </Box>
-
         <Text color={getTheme().border}>{line.repeat(columns)}</Text>
         <CommandSuggestions query={value} selectedIndex={selectedIndex} />
         <StatusBar model={modelLabel} mode={mode} thinking={loading} />

@@ -40,6 +40,8 @@ function getCommand(toolName: string, input: unknown): string {
       return `memory edit`;
     case "ThinkTool":
       return `think`;
+    case "ReadManyFilesTool":
+      return `cat ${(a.files as any[])?.map((f: any) => f.path).join(", ") ?? ""}`;
     case "AgentTool":
       return `agent · ${String((a as any).task ?? (a as any).subtask ?? "").slice(0, 50)}`;
     case "OrchestratorTool":

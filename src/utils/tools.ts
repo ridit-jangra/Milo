@@ -16,6 +16,7 @@ import { WebFetchTool } from "../tools/WebFetchTool/tool";
 import { WebSearchTool } from "../tools/WebSearchTool/tool";
 import type { OnOrchestratorEvent } from "../types";
 import type { Session } from "../utils/session";
+import { ReadManyFilesTool } from "../tools/ReadManyFileTool/tool";
 
 export const agentTools = {
   FileReadTool,
@@ -32,6 +33,7 @@ export const agentTools = {
   RecallTool,
   WebFetchTool,
   WebSearchTool,
+  ReadManyFilesTool,
 };
 
 export const orchestratorAgentTools = {
@@ -42,6 +44,16 @@ export const orchestratorAgentTools = {
   GrepTool,
   GlobTool,
   ThinkTool,
+  ReadManyFilesTool,
+};
+
+export const connectorTools = {
+  FileReadTool,
+  GrepTool,
+  GlobTool,
+  BashTool,
+  ThinkTool,
+  ReadManyFilesTool,
 };
 
 export const subagentTools = {
@@ -52,6 +64,7 @@ export const subagentTools = {
   GrepTool,
   GlobTool,
   ThinkTool,
+  ReadManyFilesTool,
 };
 
 export const chatTools = {
@@ -61,6 +74,7 @@ export const chatTools = {
   MemoryReadTool,
   WebFetchTool,
   WebSearchTool,
+  ReadManyFilesTool,
 };
 
 export function withCompact(

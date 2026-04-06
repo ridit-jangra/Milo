@@ -1,4 +1,5 @@
 import { readFile, writeFile, mkdir } from "fs/promises";
+import { readFileSync } from "fs";
 import { dirname } from "path";
 import { PET_FILE } from "./utils/env";
 import type { Pet } from "./types";
@@ -87,6 +88,20 @@ export function isCommandUnlocked(commandName: string, level: number): boolean {
   const required = UNLOCKED_AT[commandName];
   if (required === undefined) return true;
   return level >= required;
+}
+
+export function readPetSync(): Pet {
+  try {
+    const raw = readFileSync(PET_FILE, "utf-8");
+    const parsed = JSON.parse(raw);
+    return {
+      ...DEFAULT_PET,
+      ...parsed,
+      lastActive: new Date(parsed.lastActive),
+    };
+  } catch {
+    return { ...DEFAULT_PET };
+  }
 }
 
 export async function readPet(): Promise<Pet> {
@@ -236,4 +251,27 @@ export function getSpinnerPool(level: number): string[] {
   if (level >= 6) return feral;
   if (level >= 3) return mid;
   return base;
+}
+
+export type PetStage = "kitten" | "teen" | "adult" | "legendary";
+
+export function getPetStage(level: number): PetStage {
+  if (level >= 15) return "legendary";
+  if (level >= 10) return "adult";
+  if (level >= 5) return "teen";
+  return "kitten";
+}
+
+export function getStageColor(level: number): string {
+  const stage = getPetStage(level);
+  switch (stage) {
+    case "kitten":
+      return "#ff9999";
+    case "teen":
+      return "#ff6b6b";
+    case "adult":
+      return "#ff4444";
+    case "legendary":
+      return "#ffd700";
+  }
 }

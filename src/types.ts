@@ -7,7 +7,14 @@ export type Mode = "chat" | "agent" | "plan";
 export type ChatMessage =
   | { id: string; type: "user"; text: string }
   | { id: string; type: "assistant"; text: string }
-  | { id: string; type: "tool_call"; toolName: string; input: unknown }
+  | {
+      id: string;
+      type: "tool_call";
+      toolName: string;
+      input: unknown;
+      isOrchestrated?: boolean;
+      taskId?: string;
+    }
   | {
       id: string;
       type: "tool_result";
@@ -15,6 +22,8 @@ export type ChatMessage =
       input: unknown;
       output: unknown;
       success: boolean;
+      isOrchestrated?: boolean;
+      taskId?: string;
     }
   | {
       id: string;
@@ -102,6 +111,18 @@ export type OrchestratorEvent =
   | { type: "plan_created"; tasks: { id: string; subtask: string }[] }
   | { type: "agent_start"; taskId: string; subtask: string }
   | { type: "agent_done"; taskId: string; result: string }
+  | {
+      type: "subagent_tool_call";
+      taskId: string;
+      toolName: string;
+      input: unknown;
+    }
+  | {
+      type: "subagent_tool_result";
+      taskId: string;
+      toolName: string;
+      output: unknown;
+    }
   | { type: "connecting" }
   | { type: "done" };
 

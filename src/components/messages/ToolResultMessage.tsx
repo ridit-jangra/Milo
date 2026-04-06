@@ -21,6 +21,8 @@ function getAction(toolName: string, input: unknown): string {
   switch (toolName) {
     case "FileReadTool":
       return `cat ${a.path ?? ""}`;
+    case "ReadManyFilesTool":
+      return `cat ${(a.files as any[])?.map((f: any) => f.path.split(/[\\/]/).at(-1)).join(", ") ?? ""}`;
     case "FileWriteTool":
       return `write ${a.path ?? ""}`;
     case "FileEditTool":
@@ -48,7 +50,7 @@ function getAction(toolName: string, input: unknown): string {
     case "AgentTool":
       return `agent · ${String((a as any).task ?? (a as any).subtask ?? "").slice(0, 50)}`;
     case "OrchestratorTool":
-      return `orchestrate · ${String((a as any).goal ?? "").slice(0, 50)}`;
+      return `orchestrate · ${String((a as any).goal ?? "")}`;
     default:
       return toolName;
   }
@@ -62,6 +64,11 @@ function getOutputPreview(toolName: string, output: unknown): string | null {
       const out = String(o.output ?? "").trim();
       const first = out.split("\n")[0] ?? "";
       return first.length > 60 ? first.slice(0, 60) + "…" : first || null;
+    }
+    case "ReadManyFilesTool": {
+      const results = (o.results as any[]) ?? [];
+      const ok = results.filter((r) => r.success).length;
+      return `${ok}/${results.length} files`;
     }
     case "FileReadTool": {
       const lines = String(o.content ?? "")
@@ -154,19 +161,26 @@ export function ToolResultMessage({
         </Text>
       </Box>
       <Box flexDirection="column" width={columns - 4}>
-        <Text>{toolName}</Text>
+        <Text color={getTheme().secondaryText} dimColor>
+          {toolName}
+        </Text>
         <Box gap={1} alignItems="center">
           <Text color={getTheme().secondaryText} dimColor>
             {cornerBottomLeft}
             {line} {preview}
           </Text>
-          <Text dimColor color={getTheme().secondaryText}>
-            {dot}
-          </Text>
           {outputPreview && (
-            <Text color={getTheme().secondaryText} dimColor>
-              {outputPreview}
-            </Text>
+            <>
+              <Text dimColor color={getTheme().secondaryText}>
+                {dot}
+              </Text>
+              <Text
+                color={success ? getTheme().success : getTheme().error}
+                dimColor
+              >
+                {outputPreview}
+              </Text>
+            </>
           )}
         </Box>
 

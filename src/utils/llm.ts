@@ -9,17 +9,6 @@ import {
 import type { LLMOptions } from "../types";
 import { estimateTokens, shouldCompact } from "./compaction";
 
-export const maxSteps: Record<
-  "chat" | "agent" | "plan" | "subagent" | "orchestratorAgent",
-  number
-> = {
-  chat: 100,
-  agent: 200,
-  plan: 400,
-  orchestratorAgent: 100,
-  subagent: 100,
-};
-
 export async function runLLM({
   system,
   tools,
@@ -40,21 +29,36 @@ export async function runLLM({
     });
   }
 
+  const messagesBeforePrompt = [...activeSession.messages];
+
   activeSession.messages.push({ role: "user", content: prompt });
 
   const { model } = await getModel();
 
   const tokenCount = estimateTokens(activeSession.messages);
 
-  const steps = maxSteps[mode];
+  const toolReminder =
+    tools && tokenCount > 30000
+      ? `\n\n# Available tools (reminder)\nYou must ONLY call tools from this exact list: ${Object.keys(tools).join(", ")}. Do not call any other tool names.`
+      : "";
+
+  const stepLimits: Record<string, number> = {
+    chat: 30,
+    agent: 150,
+    plan: 50,
+    orchestratorAgent: 50,
+    subagent: 50,
+  };
 
   const result = await generateText({
     model,
     system:
       system +
-      `\n\n# Context usage\nTokens used so far: ~${tokenCount}. If this exceeds 60,000, call CompactTool immediately.`,
+      `\n\n# Context usage\nTokens used so far: ~${tokenCount}. If this exceeds 60,000, call CompactTool immediately.` +
+      toolReminder,
     messages: activeSession.messages,
-    ...(tools ? { tools, stopWhen: stepCountIs(steps) } : {}),
+    stopWhen: stepCountIs(stepLimits[mode] ?? 100),
+    tools,
     onStepFinish: ({ toolCalls, toolResults }) => {
       for (const toolCall of toolCalls ?? []) {
         onToolCall?.({
@@ -73,10 +77,11 @@ export async function runLLM({
     },
   });
 
-  activeSession.messages.push({
-    role: "assistant",
-    content: result.text,
-  });
+  activeSession.messages = [
+    ...messagesBeforePrompt,
+    { role: "user", content: prompt },
+    ...result.response.messages,
+  ];
 
   saveSession(activeSession);
   return { text: result.text, session: activeSession };

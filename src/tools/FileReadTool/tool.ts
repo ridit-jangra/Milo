@@ -10,17 +10,26 @@ export const FileReadTool = tool({
   title: "ReadFile",
   inputSchema: z.object({
     path: z.string().describe("The file path to read"),
-    offset: z.number().optional().describe("Line offset to start reading from"),
-    limit: z.number().optional().describe("Max number of lines to read"),
+    line_start: z
+      .number()
+      .optional()
+      .describe("Line number to start reading from (1-indexed)"),
+    line_end: z
+      .number()
+      .optional()
+      .describe("Line number to stop reading at (inclusive)"),
   }),
-  execute: async ({ path, offset, limit }) => {
+  execute: async ({ path, line_start, line_end }) => {
     try {
       const absolutePath = resolve(path);
       let lines = (await readFile(absolutePath, "utf-8")).split("\n");
       const totalLines = lines.length;
-      if (offset) lines = lines.slice(offset);
-      if (limit) lines = lines.slice(0, limit);
-      const content = addLineNumbers(lines.join("\n"), offset ? offset + 1 : 1);
+
+      const start = line_start ? line_start - 1 : 0; // convert to 0-indexed
+      const end = line_end ?? lines.length;
+
+      lines = lines.slice(start, end);
+      const content = addLineNumbers(lines.join("\n"), start + 1);
       return { success: true, content, totalLines };
     } catch (err) {
       const similar = findSimilarFile(path);

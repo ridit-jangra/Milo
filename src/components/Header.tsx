@@ -4,8 +4,7 @@ import { getTheme } from "../utils/theme";
 import { useTerminalSize } from "../hooks/useTerminalSize";
 import { getModel } from "../utils/model";
 import { AsciiLogo } from "./AsciiLogo";
-import { bullet, dot, lineVertical } from "../icons";
-import { cwd } from "process";
+import { lineVertical } from "../icons";
 
 const TIPS = [
   "run /init to generate MILO.md",
@@ -16,7 +15,9 @@ const TIPS = [
   "ctrl+t to switch mode",
 ];
 
-export function Header(props: Record<string, unknown> = {}): React.ReactNode {
+type Props = { level: number };
+
+export function Header({ level }: Props): React.ReactNode {
   const { columns } = useTerminalSize();
   const tip = TIPS[Math.floor(Math.random() * TIPS.length)];
   const [modelLabel, setModelLabel] = useState("no model");
@@ -25,7 +26,7 @@ export function Header(props: Record<string, unknown> = {}): React.ReactNode {
     getModel()
       .then(({ modelId }) => setModelLabel(modelId))
       .catch(() => {});
-  }, [JSON.stringify(props)]);
+  }, []);
 
   return (
     <Box
@@ -61,7 +62,7 @@ export function Header(props: Record<string, unknown> = {}): React.ReactNode {
       </Box>
 
       <Box flexDirection="column" justifyContent="center">
-        <AsciiLogo />
+        <AsciiLogo level={level} />
       </Box>
     </Box>
   );

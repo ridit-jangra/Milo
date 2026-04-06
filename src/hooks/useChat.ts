@@ -117,6 +117,47 @@ export function useChat(initialMode: Mode = "agent") {
             ),
           );
           break;
+        case "subagent_tool_call":
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `subagent-${event.taskId}-${event.toolName}-${Date.now()}`,
+              type: "tool_call" as const,
+              toolName: event.toolName,
+              input: event.input,
+              isOrchestrated: true,
+              taskId: event.taskId,
+            },
+          ]);
+          break;
+        case "subagent_tool_result":
+          setMessages((prev) => {
+            const idx = [...prev]
+              .reverse()
+              .findIndex(
+                (m) =>
+                  m.type === "tool_call" &&
+                  m.isOrchestrated === true &&
+                  m.taskId === event.taskId &&
+                  m.toolName === event.toolName,
+              );
+            if (idx === -1) return prev;
+            const realIdx = prev.length - 1 - idx;
+            return prev.map((m, i) => {
+              if (i !== realIdx || m.type !== "tool_call") return m;
+              return {
+                id: m.id,
+                type: "tool_result" as const,
+                toolName: m.toolName,
+                input: m.input,
+                output: event.output,
+                success: true,
+                isOrchestrated: true,
+                taskId: event.taskId,
+              };
+            });
+          });
+          break;
         case "connecting":
           pushMessage(`${radioOn} Connecting all agents...`);
           break;
