@@ -1,6 +1,4 @@
 import { readFileSync } from "fs";
-import { join } from "path";
-import { homedir } from "os";
 import { PORT_FILE } from "../utils/env";
 
 export async function status() {

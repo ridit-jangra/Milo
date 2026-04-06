@@ -1,5 +1,5 @@
-import { createServer } from "http";
-import { readFileSync, writeFileSync, mkdirSync } from "fs";
+import { createServer, type IncomingMessage, type ServerResponse } from "http";
+import { readFileSync, writeFileSync, mkdirSync, unlinkSync } from "fs";
 import { MILO_BASE_DIR, PORT_FILE } from "../utils/env";
 import { resolvePermission } from "./permissions";
 import type { PermissionDecision } from "../permissions";
@@ -10,82 +10,142 @@ import {
 } from "./sessions";
 import { handleChat } from "./chat";
 
-export async function serve({ port = 6969 }: { port?: number } = {}) {
-  // ensure ~/.milo exists
-  mkdirSync(MILO_BASE_DIR, { recursive: true });
+function readBody(req: IncomingMessage): Promise<string> {
+  return new Promise((resolve) => {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => resolve(body));
+  });
+}
 
-  const server = createServer((req, res) => {
-    const url = new URL(req.url!, `http://localhost:${port}`);
+function json(res: ServerResponse, status: number, data: unknown) {
+  res.writeHead(status, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(data));
+}
 
-    // health check
-    if (req.method === "GET" && url.pathname === "/health") {
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "ok", port }));
-      return;
-    }
+type Handler = (
+  req: IncomingMessage,
+  res: ServerResponse,
+  match: RegExpMatchArray,
+) => Promise<void>;
 
-    // graceful shutdown
-    if (req.method === "DELETE" && url.pathname === "/shutdown") {
-      res.writeHead(200);
-      res.end();
-      cleanup(port);
-      server.close();
-      process.exit(0);
-    }
-
-    if (
-      req.method === "POST" &&
-      url.pathname.match(/\/sessions\/.+\/permissions\/.+/)
-    ) {
-      const [, , sessionId, , permId] = url.pathname.split("/");
-
-      let body = "";
-      req.on("data", (chunk) => (body += chunk));
-      req.on("end", () => {
-        const { allow, allowSession } = JSON.parse(body);
-        const decision: PermissionDecision = allowSession
-          ? "allow_session"
-          : allow
-            ? "allow"
-            : "deny";
-
-        const ok = resolvePermission(permId!, decision);
-        res.writeHead(ok ? 200 : 404);
-        res.end();
-      });
-      return;
-    }
-    if (req.method === "GET" && url.pathname === "/sessions") {
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify(listDaemonSessions()));
-      return;
-    }
-
-    // POST /sessions
-    if (req.method === "POST" && url.pathname === "/sessions") {
-      let body = "";
-      req.on("data", (c) => (body += c));
-      req.on("end", () => {
-        const { mode } = body ? JSON.parse(body) : {};
-        const entry = createDaemonSession(mode ?? "agent");
-        res.writeHead(201, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ id: entry.session.id, mode: entry.mode }));
-      });
-      return;
-    }
-
-    // DELETE /sessions/:id
-    const deleteMatch = url.pathname.match(/^\/sessions\/([^/]+)$/);
-    if (req.method === "DELETE" && deleteMatch) {
-      const deleted = deleteDaemonSession(deleteMatch[1]!);
+const routes: Array<{
+  method: string;
+  pattern: RegExp;
+  handler: Handler;
+}> = [
+  {
+    method: "GET",
+    pattern: /^\/health$/,
+    handler: async (_req, res) => {
+      json(res, 200, { status: "ok" });
+    },
+  },
+  {
+    method: "GET",
+    pattern: /^\/sessions$/,
+    handler: async (_req, res) => {
+      json(res, 200, listDaemonSessions());
+    },
+  },
+  {
+    method: "POST",
+    pattern: /^\/sessions$/,
+    handler: async (req, res) => {
+      const body = await readBody(req);
+      const { mode } = body ? JSON.parse(body) : {};
+      const entry = createDaemonSession(mode ?? "agent");
+      console.log(`[session] created id=${entry.session.id} mode=${entry.mode}`);
+      json(res, 201, { id: entry.session.id, mode: entry.mode });
+    },
+  },
+  {
+    method: "DELETE",
+    pattern: /^\/sessions\/([^/]+)$/,
+    handler: async (_req, res, match) => {
+      const deleted = deleteDaemonSession(match[1]!);
+      if (deleted) console.log(`[session] deleted id=${match[1]}`);
       res.writeHead(deleted ? 200 : 404);
       res.end();
-      return;
-    }
+    },
+  },
+  {
+    method: "POST",
+    pattern: /^\/sessions\/([^/]+)\/chat$/,
+    handler: async (req, res, match) => {
+      handleChat(req, res, match[1]!);
+    },
+  },
+  {
+    method: "POST",
+    pattern: /^\/sessions\/([^/]+)\/permissions\/([^/]+)$/,
+    handler: async (req, res, match) => {
+      const body = await readBody(req);
+      const { allow, allowSession } = JSON.parse(body);
+      const decision: PermissionDecision = allowSession
+        ? "allow_session"
+        : allow
+          ? "allow"
+          : "deny";
+      const ok = resolvePermission(match[2]!, decision);
+      res.writeHead(ok ? 200 : 404);
+      res.end();
+    },
+  },
+  {
+    method: "DELETE",
+    pattern: /^\/shutdown$/,
+    handler: async (_req, res) => {
+      res.writeHead(200);
+      res.end();
+      cleanup();
+      server.closeAllConnections();
+      server.close(() => process.exit(0));
+    },
+  },
+];
 
-    const chatMatch = url.pathname.match(/^\/sessions\/([^/]+)\/chat$/);
-    if (req.method === "POST" && chatMatch) {
-      handleChat(req, res, chatMatch[1]!);
+let server: ReturnType<typeof createServer>;
+let currentPort: number;
+let cleanedUp = false;
+
+function cleanup() {
+  if (cleanedUp) return;
+  cleanedUp = true;
+  try {
+    const current = readFileSync(PORT_FILE, "utf-8").trim();
+    if (current === String(currentPort)) unlinkSync(PORT_FILE);
+  } catch {}
+}
+
+export async function serve({ port = 6969 }: { port?: number } = {}) {
+  currentPort = port;
+  mkdirSync(MILO_BASE_DIR, { recursive: true });
+
+  server = createServer(async (req, res) => {
+    const pathname = new URL(req.url!, `http://localhost:${port}`).pathname;
+    const start = Date.now();
+
+    const originalEnd = res.end.bind(res);
+    (res as any).end = (...args: Parameters<typeof res.end>) => {
+      const ms = Date.now() - start;
+      console.log(`${req.method} ${pathname} → ${res.statusCode} (${ms}ms)`);
+      return originalEnd(...args);
+    };
+
+    for (const route of routes) {
+      if (req.method !== route.method) continue;
+      const match = pathname.match(route.pattern);
+      if (!match) continue;
+      try {
+        await route.handler(req, res, match);
+      } catch (err) {
+        console.error("handler error:", err);
+        if (!res.headersSent) {
+          res.writeHead(500);
+          res.end();
+        }
+      }
       return;
     }
 
@@ -94,23 +154,21 @@ export async function serve({ port = 6969 }: { port?: number } = {}) {
   });
 
   server.listen(port, () => {
-    // write port to ~/.milo/milo.port
     writeFileSync(PORT_FILE, String(port));
     console.log(`🐱 milo daemon running on port ${port}`);
   });
 
-  // cleanup on exit
-  process.on("SIGINT", () => cleanup(port));
-  process.on("SIGTERM", () => cleanup(port));
-}
+  process.on("SIGINT", () => {
+    cleanup();
+    server.closeAllConnections();
+    server.close(() => process.exit(0));
+  });
 
-function cleanup(port: number) {
-  try {
-    const current = readFileSync(PORT_FILE, "utf-8").trim();
-    if (current === String(port)) {
-      // only delete if it's our port
-      const { unlinkSync } = require("fs");
-      unlinkSync(PORT_FILE);
-    }
-  } catch {}
+  process.on("SIGTERM", () => {
+    cleanup();
+    server.closeAllConnections();
+    server.close(() => process.exit(0));
+  });
+
+  process.on("exit", cleanup);
 }
