@@ -62,7 +62,11 @@ export function useChat(initialMode: Mode = "agent") {
 
   useEffect(() => {
     const unsub = onPermissionRequest((p) => {
-      setPendingPermission({ toolName: p.toolName, input: p.input });
+      setPendingPermission({
+        id: crypto.randomUUID(),
+        toolName: p.toolName,
+        input: p.input,
+      });
     });
     return unsub;
   }, []);

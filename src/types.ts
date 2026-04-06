@@ -31,7 +31,7 @@ export type ChatMessage =
       toolName: string;
       input: unknown;
       preview: unknown;
-      resolve: (decision: "allow" | "allow_session" | "deny") => void;
+      resolve: (decision: PermissionDecision) => void;
     };
 
 export interface Theme {
@@ -128,7 +128,10 @@ export type OrchestratorEvent =
 
 export type OnOrchestratorEvent = (event: OrchestratorEvent) => void;
 
+export type PermissionDecision = "allow" | "allow_session" | "deny";
+
 export type PermissionRequest = {
+  id: string;
   toolName: string;
   input: unknown;
 };
@@ -143,3 +146,10 @@ export interface Pet {
   lastActive: Date;
   totalTasks: number;
 }
+
+export type DaemonSession = {
+  id: string;
+  createdAt: Date;
+  messages: Session;
+  mode: Mode;
+};

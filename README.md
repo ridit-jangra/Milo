@@ -126,6 +126,28 @@ Milo remembers things across sessions. global preferences live at `~/.milo/memor
 
 ---
 
+## Daemon mode
+
+Milo can run as a background HTTP daemon — useful for Meridia, Echo, or any tool that wants to talk to Milo programmatically.
+
+```bash
+milo serve        # start daemon on port 6969
+milo status       # check if running
+milo kill         # stop daemon
+```
+
+Sessions and chat are available over HTTP:
+
+```
+POST   /sessions                         create a session
+GET    /sessions                         list sessions
+DELETE /sessions/:id                     delete a session
+POST   /sessions/:id/chat                send a message (SSE stream)
+POST   /sessions/:id/permissions/:permId resolve a permission request
+```
+
+---
+
 ## License
 
 MIT

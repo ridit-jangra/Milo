@@ -10,3 +10,4 @@ export const PROJECT_MEMORY_FILE = join(cwd(), "MILO.md");
 export const SESSIONS_DIR = join(MILO_BASE_DIR, "sessions");
 export const PET_FILE = join(MILO_BASE_DIR, "pet.json");
 export const EXECUTION_STATE_FILE = join(MILO_BASE_DIR, "execution-state.json");
+export const PORT_FILE = join(MILO_BASE_DIR, "milo.port");
