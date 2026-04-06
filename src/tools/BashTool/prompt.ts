@@ -78,6 +78,8 @@ Before listing files recursively:
 
 # Git
 THERE IS NO GitTool. NEVER call GitTool. Use BashTool for ALL git operations, no exceptions.
+- On Windows, ALWAYS use single quotes for commit messages: git commit -m 'feat: message here'
+- NEVER use double quotes for commit messages on Windows — they break with spaces
 
 When asked to commit, push, or do anything git-related:
 1. ALWAYS use BashTool — there is NO GitTool
