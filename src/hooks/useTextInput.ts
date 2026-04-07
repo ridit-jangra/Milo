@@ -29,6 +29,7 @@ export type UseTextInputProps = {
   onHistoryUp?: () => void;
   onHistoryDown?: () => void;
   onHistoryReset?: () => void;
+  onEscape?: () => void;
   mask?: string;
   multiline?: boolean;
   cursorChar: string;
@@ -66,6 +67,7 @@ export function useTextInput({
   disableCursorMovementForUpDownKeys = false,
   externalOffset,
   onOffsetChange,
+  onEscape,
 }: UseTextInputProps): UseTextInputResult {
   const offset = externalOffset;
   const setOffset = onOffsetChange;
@@ -95,6 +97,7 @@ export function useTextInput({
     if (originalValue) {
       onChange("");
     }
+    onEscape?.();
   }
 
   function clear() {

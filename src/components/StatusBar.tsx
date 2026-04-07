@@ -57,15 +57,35 @@ export function StatusBar({
   const stage = pet ? getPetStage(pet.level) : "kitten";
   const levelIcon = stage === "legendary" ? "👑" : star;
 
+  // Determine dynamic thinking message based on pet stage and mood/hunger
+  let thinkingMessage = "";
+  if (stage === "legendary") {
+    if (pet?.mood === "happy") {
+      thinkingMessage = "Cooking 🍳";
+    } else if ((pet?.hunger ?? 0) >= 80) {
+      thinkingMessage = "Starving 😿";
+    } else if (pet?.mood === "sleepy") {
+      thinkingMessage = "zzzz 💤";
+    } else {
+      thinkingMessage = "Cooking 🍳";
+    }
+  } else if (stage === "adult") {
+    thinkingMessage = "Working...";
+  } else if (stage === "teen") {
+    thinkingMessage = "On it 😼";
+  } else {
+    thinkingMessage = "Thinking...";
+  }
+
   const modeBg = getModeColor(mode, stage);
 
   return (
     <Box width={columns} justifyContent="space-between">
-      <Box gap={2}>
+      <Box gap={1}>
         {thinking ? (
           <Box>
             <Spinner type="bluePulse" />
-            <Text> Thinking</Text>
+            <Text>{thinkingMessage}</Text>
           </Box>
         ) : (
           <>

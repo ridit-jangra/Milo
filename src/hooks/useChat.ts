@@ -89,7 +89,7 @@ export function useChat(initialMode: Mode = "agent") {
       switch (event.type) {
         case "plan_created":
           pushMessage(
-            `${info} Plan created — ${event.tasks.length} subtasks:\n${event.tasks
+            `Plan created — ${event.tasks.length} subtasks:\n${event.tasks
               .map((t) => `  [${t.id}] ${t.subtask}`)
               .join("\n")}`,
           );
@@ -335,5 +335,9 @@ export function useChat(initialMode: Mode = "agent") {
     pushMessage,
     pendingWizard,
     closeWizard,
+    abort: () => {
+      abortControllerRef.current.abort();
+      setLoading(false);
+    },
   };
 }

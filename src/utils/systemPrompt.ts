@@ -94,6 +94,7 @@ const TOOL_RULES = `
 - After moving a file to a new location, always delete the original using BashTool.
 - After any refactor or restructure, always run the build command and verify it compiles before finishing.
 - Use ReadManyFilesTool instead of calling FileReadTool multiple times — batch all reads into a single call.
+- If FileEditTool fails after 2 attempts, use FileReadTool to read the full file, apply the change, then use FileWriteTool to rewrite the entire file. Never give up on an edit.
 
 # Searching
 - GrepTool searches FILE CONTENTS for a pattern. It is NOT for finding files by name.

@@ -3,6 +3,7 @@ import { Box, Text, Static, useInput } from "ink";
 import { getHistory, addToHistory } from "../history";
 import TextInput from "../components/TextInput";
 import { Spinner } from "../components/Spinner";
+import InkSpinner from "ink-spinner";
 import { useTerminalSize } from "../hooks/useTerminalSize";
 import { useChat } from "../hooks/useChat";
 import { getTheme } from "../utils/theme";
@@ -60,6 +61,7 @@ export default function REPL(): JSX.Element {
     pendingPermission,
     pendingWizard,
     closeWizard,
+    abort,
   } = useChat();
 
   React.useEffect(() => {
@@ -183,7 +185,8 @@ export default function REPL(): JSX.Element {
     (acc, m) => {
       if (
         (m.type === "tool_call" || m.type === "tool_result") &&
-        m.isOrchestrated
+        m.isOrchestrated &&
+        !m.taskId
       ) {
         return acc;
       }
@@ -227,34 +230,11 @@ export default function REPL(): JSX.Element {
                   <Text color={getTheme().success}>✔</Text>
                   <Text color={getTheme().secondaryText}>{item.task}</Text>
                 </Box>
-                {item.subtools.map((sub) => {
-                  const preview =
-                    sub.type === "tool_call"
-                      ? String(JSON.stringify(sub.input ?? "")).slice(
-                          0,
-                          columns - 24,
-                        )
-                      : String(JSON.stringify(sub.output ?? "")).slice(
-                          0,
-                          columns - 24,
-                        );
-                  return (
-                    <Box
-                      key={sub.id}
-                      flexDirection="row"
-                      gap={1}
-                      marginLeft={2}
-                    >
-                      <Text color={getTheme().secondaryText} dimColor>
-                        {"╰─"}
-                      </Text>
-                      <Text color={getTheme().primary}>{"★"}</Text>
-                      <Text color={getTheme().secondaryText} dimColor>
-                        {sub.toolName} {"·"} {preview}
-                      </Text>
-                    </Box>
-                  );
-                })}
+                {item.subtools.map((sub) => (
+                  <Box key={sub.id} marginLeft={2}>
+                    <Message msg={sub} addMargin={true} />
+                  </Box>
+                ))}
               </Box>
             );
           }
@@ -279,7 +259,7 @@ export default function REPL(): JSX.Element {
             return (
               <Box key={agent.id} flexDirection="column" marginBottom={1}>
                 <Box flexDirection="row" gap={1}>
-                  <Text color={getTheme().secondaryText}>{"◆"}</Text>
+                  <InkSpinner type="orangePulse" />
                   <Text color={getTheme().secondaryText} dimColor>
                     {task}
                   </Text>
@@ -296,19 +276,8 @@ export default function REPL(): JSX.Element {
                           columns - 24,
                         );
                   return (
-                    <Box
-                      key={sub.id}
-                      flexDirection="row"
-                      gap={1}
-                      marginLeft={2}
-                    >
-                      <Text color={getTheme().secondaryText} dimColor>
-                        {"╰─"}
-                      </Text>
-                      <Text color={getTheme().primary}>{"★"}</Text>
-                      <Text color={getTheme().secondaryText} dimColor>
-                        {sub.toolName} {"·"} {preview}
-                      </Text>
+                    <Box key={sub.id} marginLeft={2}>
+                      <Message msg={sub} addMargin={true} />
                     </Box>
                   );
                 })}
@@ -352,6 +321,7 @@ export default function REPL(): JSX.Element {
                 onHistoryUp={onHistoryUp}
                 onHistoryDown={onHistoryDown}
                 onHistoryReset={onHistoryReset}
+                onEscape={abort as any}
               />
             </Box>
           )}
