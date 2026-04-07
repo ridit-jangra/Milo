@@ -104,8 +104,8 @@ function getOutputPreview(toolName: string, output: unknown): string | null {
       return o.success ? "saved" : "failed";
     case "ThinkTool": {
       const thought = String((o as any).thought ?? "");
-      return thought.length > 60
-        ? thought.slice(0, 60) + "…"
+      return thought.length > 200
+        ? thought.slice(0, 200) + "…"
         : thought || "thought";
     }
     default:

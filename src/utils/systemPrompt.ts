@@ -104,6 +104,7 @@ const TOOL_RULES = `
 - Chain commands with && or ;, never newlines.
 - Do not install packages unless explicitly asked.
 - Never use mkdir -p on any platform — on Windows it creates a "-p" folder. Use plain "mkdir" on Windows, "mkdir -p" only on unix.
+- You CAN edit files within the current project repo using FileEditTool or FileWriteTool — do not refuse based on file location. If a file is sensitive or outside the project, ask the user for confirmation before proceeding.
 
 # Git
 - When asked for a commit message, ALWAYS run git status and git diff first before generating one.

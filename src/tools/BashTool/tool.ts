@@ -37,7 +37,11 @@ export const BashTool = {
         };
 
       const shell = PersistentShell.getInstance();
-      const output = await shell.execute(command, timeout);
+
+      const sanitized =
+        process.platform === "win32" ? command.replace(/\^"/g, '"') : command;
+
+      const output = await shell.execute(sanitized, timeout);
 
       const truncated = output.length > MAX_OUTPUT_LENGTH;
       return {
