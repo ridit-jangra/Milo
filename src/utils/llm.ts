@@ -9,6 +9,24 @@ import {
 import type { LLMOptions } from "../types";
 import { estimateTokens, shouldCompact } from "./compaction";
 
+// best-effort JSON repair for malformed tool call args
+function repairJSON(raw: string): string {
+  try {
+    JSON.parse(raw);
+    return raw; // already valid
+  } catch {
+    // fix unescaped newlines and control chars inside strings
+    return raw.replace(/[\u0000-\u001F\u007F]/g, (c) => {
+      const replacements: Record<string, string> = {
+        "\n": "\\n",
+        "\r": "\\r",
+        "\t": "\\t",
+      };
+      return replacements[c] ?? "";
+    });
+  }
+}
+
 export async function runLLM({
   system,
   tools,
@@ -30,17 +48,14 @@ export async function runLLM({
   }
 
   const messagesBeforePrompt = [...activeSession.messages];
-
   activeSession.messages.push({ role: "user", content: prompt });
 
   const { model } = await getModel();
-
   const tokenCount = estimateTokens(activeSession.messages);
 
-  const toolReminder =
-    tools && tokenCount > 30000
-      ? `\n\n# Available tools (reminder)\nYou must ONLY call tools from this exact list: ${Object.keys(tools).join(", ")}. Do not call any other tool names.`
-      : "";
+  const toolReminder = tools
+    ? `\n\n# STRICT TOOL RULE — you may ONLY call these tools: ${Object.keys(tools).join(", ")}. Calling anything else will crash. No exceptions.`
+    : "";
 
   const stepLimits: Record<string, number> = {
     chat: 30,
@@ -59,6 +74,21 @@ export async function runLLM({
     messages: activeSession.messages,
     stopWhen: stepCountIs(stepLimits[mode] ?? 100),
     tools,
+    experimental_repairToolCall: async ({ toolCall, error }) => {
+      console.warn(
+        `[llm] repairing tool call ${toolCall.toolName}:`,
+        error.message,
+      );
+      try {
+        const repaired = repairJSON(toolCall.input as string);
+        return { ...toolCall, input: JSON.parse(repaired) };
+      } catch {
+        console.error(
+          `[llm] could not repair tool call ${toolCall.toolName}, skipping`,
+        );
+        return null;
+      }
+    },
     onStepFinish: ({ toolCalls, toolResults }) => {
       for (const toolCall of toolCalls ?? []) {
         onToolCall?.({

@@ -11,6 +11,6 @@ export const ThinkTool = tool({
       .describe("Your reasoning, plan, or analysis before taking action"),
   }),
   execute: async ({ thought }) => {
-    return { success: true, message: "Your thought has been logged." };
+    return { success: true, thought };
   },
 });

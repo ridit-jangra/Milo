@@ -102,8 +102,12 @@ function getOutputPreview(toolName: string, output: unknown): string | null {
     case "FileWriteTool":
     case "FileEditTool":
       return o.success ? "saved" : "failed";
-    case "ThinkTool":
-      return null;
+    case "ThinkTool": {
+      const thought = String((o as any).thought ?? "");
+      return thought.length > 60
+        ? thought.slice(0, 60) + "…"
+        : thought || "thought";
+    }
     default:
       return null;
   }

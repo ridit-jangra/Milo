@@ -3,10 +3,7 @@ import { z } from "zod";
 import { writeFile, mkdir } from "fs/promises";
 import { dirname } from "path";
 import { DESCRIPTION, PROMPT } from "./prompt.js";
-import {
-  requestPermission,
-  TOOLS_REQUIRING_PERMISSION,
-} from "../../permissions";
+import { requestPermission } from "../../permissions";
 
 export const FileWriteTool = tool({
   description: DESCRIPTION + "\n\n" + PROMPT,
