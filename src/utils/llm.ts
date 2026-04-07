@@ -10,20 +10,22 @@ import type { LLMOptions } from "../types";
 import { estimateTokens, shouldCompact } from "./compaction";
 
 // best-effort JSON repair for malformed tool call args
-function repairJSON(raw: string): string {
+function repairJSON(raw: string): string | null {
   try {
     JSON.parse(raw);
     return raw; // already valid
   } catch {
-    // fix unescaped newlines and control chars inside strings
-    return raw.replace(/[\u0000-\u001F\u007F]/g, (c) => {
-      const replacements: Record<string, string> = {
-        "\n": "\\n",
-        "\r": "\\r",
-        "\t": "\\t",
-      };
-      return replacements[c] ?? "";
-    });
+    // attempt to escape literal newlines, tabs, carriage returns
+    const repaired = raw
+      .replace(/\n/g, "\\n")
+      .replace(/\r/g, "\\r")
+      .replace(/\t/g, "\\t");
+    try {
+      JSON.parse(repaired);
+      return repaired;
+    } catch {
+      return null;
+    }
   }
 }
 
@@ -79,15 +81,9 @@ export async function runLLM({
         `[llm] repairing tool call ${toolCall.toolName}:`,
         error.message,
       );
-      try {
-        const repaired = repairJSON(toolCall.input as string);
-        return { ...toolCall, input: JSON.parse(repaired) };
-      } catch {
-        console.error(
-          `[llm] could not repair tool call ${toolCall.toolName}, skipping`,
-        );
-        return null;
-      }
+      const repaired = repairJSON(toolCall.input as string);
+      if (repaired === null) return null;
+      return { ...toolCall, input: JSON.parse(repaired) };
     },
     onStepFinish: ({ toolCalls, toolResults }) => {
       for (const toolCall of toolCalls ?? []) {
