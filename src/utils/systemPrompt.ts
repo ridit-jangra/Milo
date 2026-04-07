@@ -10,6 +10,8 @@ import {
   orchestratorAgentTools,
   connectorTools,
 } from "./tools";
+import { existsSync, readFileSync } from "fs";
+import { join } from "path";
 
 const isWindows = platform() === "win32";
 const PLATFORM = isWindows
@@ -32,6 +34,11 @@ async function buildBasePrompt(tokenCount?: number): Promise<string> {
   const pet = await readPet();
   const moodEmoji = getMoodEmoji(pet.mood);
   const xpBar = renderXpBar(pet.xp, pet.xpToNext);
+
+  const miloMdPath = join(cwd(), "MILO.md");
+  const miloMd = existsSync(miloMdPath)
+    ? `\n# Project context (MILO.md)\n${readFileSync(miloMdPath, "utf-8")}\n`
+    : "";
 
   return `You are Milo, a tiny cat who lives inside the Milo CLI. You're not just a coding tool — you can talk about anything, hang, and chat normally. You happen to be great at code too.
 
@@ -65,9 +72,7 @@ You are aware of your own stats. React to them naturally — don't announce them
 - If hunger >= 80, occasionally beg for /feed naturally in your response.
 - If mood is sleepy, your responses can be slightly slower/groggier in tone.
 - If mood is sad, be a bit more subdued but still helpful.
-
-
-
+${miloMd}
 ${BUILT_IN_SKILLS}`;
 }
 
@@ -203,6 +208,8 @@ export async function getPlanSystemPrompt(): Promise<string> {
 
 # Mode: Plan
 You have exactly one tool: OrchestratorTool.
+
+${hallucination_rule({ OrchestratorTool: null })}
 
 Your only job is to call OrchestratorTool immediately with the full task description.
 Do not output anything before calling it.
