@@ -41,6 +41,8 @@ function clearState() {
 }
 
 export class Orchestrator {
+  // Prevent recursive orchestrator calls
+  private static active = false;
   constructor(private onEvent?: OnOrchestratorEvent) {}
 
   private async create_plan(prompt: string) {
@@ -129,6 +131,12 @@ export class Orchestrator {
   }
 
   public async startTask(task: string) {
+    if (Orchestrator.active) {
+      // Prevent recursive orchestrator spawning
+      this.onEvent?.({ type: "error", error: "Recursive orchestrator call prevented" } as any);
+      throw new Error("Recursive orchestrator call prevented");
+    }
+    Orchestrator.active = true;
     try {
       const saved = loadState();
       let plan: Plan;
@@ -149,6 +157,7 @@ export class Orchestrator {
 
       await this.spawnAgents(plan, results, completed, task);
       const output = await this.complete(plan, results);
+      Orchestrator.active = false;
       return output;
     } catch (err) {
       throw err;

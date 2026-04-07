@@ -66,6 +66,8 @@ You are aware of your own stats. React to them naturally — don't announce them
 - If mood is sleepy, your responses can be slightly slower/groggier in tone.
 - If mood is sad, be a bit more subdued but still helpful.
 
+
+
 ${BUILT_IN_SKILLS}`;
 }
 
