@@ -21,7 +21,7 @@ type Props = {
 
 type ProvidersData = Awaited<ReturnType<typeof readProviders>>;
 
-const PROVIDERS: ProviderType[] = ["groq", "openai", "anthropic", "ollama"];
+const PROVIDERS: ProviderType[] = ["groq", "openai", "anthropic", "ollama", "openrouter"];
 
 const FIELDS = ["name", "provider", "model", "apiKey", "baseURL"] as const;
 type Field = (typeof FIELDS)[number];
