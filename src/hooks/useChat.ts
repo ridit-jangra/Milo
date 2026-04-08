@@ -274,6 +274,7 @@ export function useChat(initialMode: Mode = "agent") {
                 onToolResult,
                 handleOrchestratorEvent,
                 onCompact,
+                abortControllerRef.current.signal,
               )
             : currentMode === "chat"
               ? await chatWithModel(
@@ -282,6 +283,7 @@ export function useChat(initialMode: Mode = "agent") {
                   onToolCall,
                   onToolResult,
                   onCompact,
+                  abortControllerRef.current.signal,
                 )
               : await createAgent(
                   input,
@@ -289,6 +291,7 @@ export function useChat(initialMode: Mode = "agent") {
                   onToolCall,
                   onToolResult,
                   onCompact,
+                  abortControllerRef.current.signal,
                 );
 
         setMessages((prev) => [

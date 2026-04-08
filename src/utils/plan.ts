@@ -15,6 +15,7 @@ export async function planWithModel(
   onToolResult?: (t: StepToolResult) => void,
   onOrchestratorEvent?: OnOrchestratorEvent,
   onCompact?: (s: Session) => void,
+  abortSignal?: AbortSignal,
 ) {
   const planTools = createPlanTools(onOrchestratorEvent);
   return runLLM({
@@ -28,5 +29,6 @@ export async function planWithModel(
         : planTools,
     onToolCall,
     onToolResult,
+    abortSignal,
   });
 }

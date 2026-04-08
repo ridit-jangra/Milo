@@ -10,6 +10,7 @@ export async function createAgent(
   onToolCall?: (t: StepToolCall) => void,
   onToolResult?: (t: StepToolResult) => void,
   onCompact?: (s: Session) => void,
+  abortSignal?: AbortSignal,
 ) {
   return runLLM({
     system: await getAgentSystemPrompt(),
@@ -22,6 +23,7 @@ export async function createAgent(
         : agentTools,
     onToolCall,
     onToolResult,
+    abortSignal,
   });
 }
 
@@ -31,6 +33,7 @@ export async function createSubAgent(
   onToolCall?: (t: StepToolCall) => void,
   onToolResult?: (t: StepToolResult) => void,
   onCompact?: (s: Session) => void,
+  abortSignal?: AbortSignal,
 ) {
   return runLLM({
     system: await getAgentSystemPrompt(),
@@ -43,5 +46,6 @@ export async function createSubAgent(
         : subagentTools,
     onToolCall,
     onToolResult,
+    abortSignal,
   });
 }

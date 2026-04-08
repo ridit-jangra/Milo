@@ -1,4 +1,3 @@
-// prompt.ts
 const MAX_LINES_TO_READ = 2000;
 const MAX_LINE_LENGTH = 2000;
 

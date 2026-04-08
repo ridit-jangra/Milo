@@ -1,10 +1,10 @@
 import { tool } from "ai";
 import { z } from "zod";
+import { DESCRIPTION, PROMPT } from "./prompt";
 
 export const ThinkTool = tool({
   title: "Think",
-  description:
-    "Use this tool to think out loud in first person before acting. Write your internal monologue like 'I need to…', 'I should…', 'I did…', 'My plan is…'. No side effects.",
+  description: DESCRIPTION + "\n\n" + PROMPT,
   inputSchema: z.object({
     thought: z
       .string()

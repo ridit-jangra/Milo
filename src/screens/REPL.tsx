@@ -64,6 +64,13 @@ export default function REPL(): JSX.Element {
     abort,
   } = useChat();
 
+  // Capture Escape globally to abort running LLM tasks even when loading spinner is shown
+  useInput((_, key) => {
+    if (key.escape) {
+      abort();
+    }
+  });
+
   React.useEffect(() => {
     import("../utils/model")
       .then((m) => m.getModel())

@@ -37,6 +37,7 @@ export async function runLLM({
   mode = "agent",
   onToolCall,
   onToolResult,
+  abortSignal,
 }: LLMOptions): Promise<{ text: string; session: Session }> {
   let activeSession = session ?? createSession();
   loadMemoryIntoSession(activeSession);
@@ -76,6 +77,7 @@ export async function runLLM({
     messages: activeSession.messages,
     stopWhen: stepCountIs(stepLimits[mode] ?? 100),
     tools,
+    abortSignal,
     experimental_repairToolCall: async ({ toolCall, error }) => {
       console.warn(
         `[llm] repairing tool call ${toolCall.toolName}:`,

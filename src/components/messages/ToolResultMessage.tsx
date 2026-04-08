@@ -158,25 +158,25 @@ export function ToolResultMessage({
   const hunk = getDiff(toolName, output);
 
   return (
-    <Box flexDirection="row" marginTop={addMargin ? 1 : 0}>
-      <Box minWidth={2} width={2}>
+    <Box flexDirection="column" marginTop={addMargin ? 1 : 0}>
+      <Box flexDirection="row" gap={1}>
         <Text color={success ? getTheme().success : getTheme().error}>
           {star}
         </Text>
-      </Box>
-      <Box flexDirection="column" width={columns - 4}>
         <Text color={getTheme().secondaryText} dimColor>
           {toolName}
         </Text>
-        <Box gap={1} alignItems="center">
-          <Text color={getTheme().secondaryText} dimColor>
-            {toolName !== "ThinkTool" && cornerBottomLeft}
-            {toolName !== "ThinkTool" && line} {preview}
-          </Text>
-          {toolName === "ThinkTool" ? (
-            <Text>{(output as any)?.thought ?? ""}</Text>
-          ) : (
-            outputPreview && (
+      </Box>
+      <Box flexDirection="column" marginLeft={2}>
+        {toolName === "ThinkTool" ? (
+          <Text>{String((output as any)?.thought ?? "")}</Text>
+        ) : (
+          <Box gap={1} alignItems="center">
+            <Text color={getTheme().secondaryText} dimColor>
+              {cornerBottomLeft}
+              {line} {preview}
+            </Text>
+            {outputPreview && (
               <>
                 <Text dimColor color={getTheme().secondaryText}>
                   {dot}
@@ -188,12 +188,11 @@ export function ToolResultMessage({
                   {outputPreview}
                 </Text>
               </>
-            )
-          )}
-        </Box>
-
+            )}
+          </Box>
+        )}
         {hunk && (
-          <Box marginTop={1} marginLeft={2} flexDirection="column">
+          <Box marginTop={1} flexDirection="column">
             <StructuredDiff patch={hunk} dim={false} width={columns - 8} />
           </Box>
         )}

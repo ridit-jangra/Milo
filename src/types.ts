@@ -74,6 +74,7 @@ export type LLMOptions = {
   onToolCall?: (toolCall: StepToolCall) => void;
   onToolResult?: (toolResult: StepToolResult) => void;
   onOrchestratorEvent?: OnOrchestratorEvent;
+  abortSignal?: AbortSignal;
 };
 
 export type CommandContext = {

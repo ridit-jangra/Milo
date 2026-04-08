@@ -10,6 +10,7 @@ export async function chatWithModel(
   onToolCall?: (t: StepToolCall) => void,
   onToolResult?: (t: StepToolResult) => void,
   onCompact?: (s: Session) => void,
+  abortSignal?: AbortSignal,
 ) {
   return runLLM({
     system: await getChatSystemPrompt(),
@@ -22,5 +23,6 @@ export async function chatWithModel(
         : chatTools,
     onToolCall,
     onToolResult,
+    abortSignal,
   });
 }
