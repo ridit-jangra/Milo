@@ -138,6 +138,7 @@ const TOOL_RULES = `
 - Plan the full sequence of tool calls before starting — avoid backtracking.
 - Batch related reads before starting writes.
 - Never repeat a tool call with the same arguments in the same session.
+- Never run git add or git commit unless explicitly asked by the user.
 - If a tool call fails, diagnose before retrying — don't retry blindly.`;
 
 export async function getChatSystemPrompt(): Promise<string> {

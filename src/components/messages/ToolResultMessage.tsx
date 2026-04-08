@@ -170,21 +170,25 @@ export function ToolResultMessage({
         </Text>
         <Box gap={1} alignItems="center">
           <Text color={getTheme().secondaryText} dimColor>
-            {cornerBottomLeft}
-            {line} {preview}
+            {toolName !== "ThinkTool" && cornerBottomLeft}
+            {toolName !== "ThinkTool" && line} {preview}
           </Text>
-          {outputPreview && (
-            <>
-              <Text dimColor color={getTheme().secondaryText}>
-                {dot}
-              </Text>
-              <Text
-                color={success ? getTheme().success : getTheme().error}
-                dimColor
-              >
-                {outputPreview}
-              </Text>
-            </>
+          {toolName === "ThinkTool" ? (
+            <Text>{(output as any)?.thought ?? ""}</Text>
+          ) : (
+            outputPreview && (
+              <>
+                <Text dimColor color={getTheme().secondaryText}>
+                  {dot}
+                </Text>
+                <Text
+                  color={success ? getTheme().success : getTheme().error}
+                  dimColor
+                >
+                  {outputPreview}
+                </Text>
+              </>
+            )
           )}
         </Box>
 

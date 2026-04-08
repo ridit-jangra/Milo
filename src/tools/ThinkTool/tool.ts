@@ -4,7 +4,7 @@ import { z } from "zod";
 export const ThinkTool = tool({
   title: "Think",
   description:
-    "Use this tool to think through a problem before acting. No side effects — just a scratchpad for reasoning.",
+    "Use this tool to think out loud in first person before acting. Write your internal monologue like 'I need to…', 'I should…', 'I did…', 'My plan is…'. No side effects.",
   inputSchema: z.object({
     thought: z
       .string()
