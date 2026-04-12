@@ -24,7 +24,7 @@ Then run:
 milo
 ```
 
-On first launch, run `/provider add` to configure your AI provider.
+On first launch, Milo will walk you through a quick setup to introduce yourself — your name, GitHub, and a couple preferences. After that, run `/provider add` to configure your AI provider.
 
 ---
 
@@ -44,7 +44,6 @@ Switch modes with `ctrl+t` or `/mode agent | chat | plan`.
 
 ## Commands
 
-
 | Command     | What it does                                                    |
 | ----------- | --------------------------------------------------------------- |
 | `/help`     | list all commands                                               |
@@ -53,12 +52,11 @@ Switch modes with `ctrl+t` or `/mode agent | chat | plan`.
 | `/provider` | manage AI providers                                             |
 | `/pet`      | check milo's stats                                              |
 | `/feed`     | feed milo 🍖                                                    |
-| `/roast`    | milo roasts your codebase. brutally. *(unlocks at level 3)*     |
-| `/vibe`     | vibe check on your project *(unlocks at level 5)*               |
-| `/crimes`   | milo files a rap sheet on your codebase *(unlocks at level 10)* |
+| `/roast`    | milo roasts your codebase. brutally. _(unlocks at level 3)_     |
+| `/vibe`     | vibe check on your project _(unlocks at level 5)_               |
+| `/crimes`   | milo files a rap sheet on your codebase _(unlocks at level 10)_ |
 | `/clear`    | clear the conversation                                          |
 | `/genz`     | you don't want to know                                          |
-
 
 ---
 
@@ -104,14 +102,12 @@ Milo has a pet system. every tool call earns XP. level up to unlock commands and
 
 **4 evolution stages** — milo's ASCII art, colors, and personality change as you level up:
 
-
 | stage     | levels | vibe                    |
 | --------- | ------ | ----------------------- |
 | kitten    | 1–4    | just getting started 🐱 |
 | teen      | 5–9    | getting dangerous 😼    |
 | adult     | 10–14  | absolute unit 😤        |
 | legendary | 15+    | feared by dogs 👑       |
-
 
 milo gets hungry over time. run `/feed` or it gets sad.
 

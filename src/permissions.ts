@@ -14,6 +14,7 @@ export const TOOLS_REQUIRING_PERMISSION = new Set([
   "FileWriteTool",
   "FileEditTool",
   "BashTool",
+  "DownloadTool",
 ]);
 
 type PendingPermission = {

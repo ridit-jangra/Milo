@@ -17,6 +17,7 @@ import { WebSearchTool } from "../tools/WebSearchTool/tool";
 import type { OnOrchestratorEvent } from "../types";
 import type { Session } from "../utils/session";
 import { ReadManyFilesTool } from "../tools/ReadManyFileTool/tool";
+import { DownloadTool } from "../tools/DownloadTool/tool";
 
 export const agentTools = {
   FileReadTool,
@@ -34,6 +35,7 @@ export const agentTools = {
   WebFetchTool,
   WebSearchTool,
   ReadManyFilesTool,
+  DownloadTool,
 };
 
 export const orchestratorAgentTools = {
@@ -45,6 +47,7 @@ export const orchestratorAgentTools = {
   GlobTool,
   ThinkTool,
   ReadManyFilesTool,
+  DownloadTool,
 };
 
 export const connectorTools = {
@@ -54,6 +57,7 @@ export const connectorTools = {
   BashTool,
   ThinkTool,
   ReadManyFilesTool,
+  DownloadTool,
 };
 
 export const subagentTools = {
@@ -65,6 +69,7 @@ export const subagentTools = {
   GlobTool,
   ThinkTool,
   ReadManyFilesTool,
+  DownloadTool,
 };
 
 export const chatTools = {

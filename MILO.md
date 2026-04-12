@@ -4,6 +4,7 @@
 Milo is a **terminal‑based AI assistant** built with **Ink** (React for CLIs). It runs as an interactive REPL where you type commands or natural language queries. Milo can:
 - Chat with LLMs (OpenAI, Anthropic, Groq, Google, Ollama).
 - Run **multi‑agent orchestrations** (sub‑agents, tool calls, permissions).
+- **Download assets** from trusted sources (GitHub, GitLab, Undraw, Google Fonts) with security restrictions.
 - Manage a tiny pet‑XP system that levels up the cat.
 - Provide built‑in commands (`/help`, `/mode`, `/feed`, `/roast`, etc.).
 - Persist session memory and compact it when context grows.
