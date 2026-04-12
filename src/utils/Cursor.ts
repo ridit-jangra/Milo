@@ -307,11 +307,6 @@ export class MeasuredText {
         // For non-blank lines
         const startOffset = this.text.indexOf(text, searchOffset);
         if (startOffset === -1) {
-          console.log("Debug: Failed to find wrapped line in original text");
-          console.log("Debug: Current text:", text);
-          console.log("Debug: Full original text:", this.text);
-          console.log("Debug: Search offset:", searchOffset);
-          console.log("Debug: Wrapped text:", wrappedText);
           throw new Error("Failed to find wrapped line in original text");
         }
 

@@ -75,15 +75,13 @@ Key folders:
 - **XP system:** `awardXP` updates pet state; level‑up messages are injected.
 
 ## 8. Architecture Notes
-- **Entry → REPL**: `index.tsx` renders `<REPL />` using Ink.
-- **REPL** orchestrates UI layout, reads input, shows static message list, status bar, command suggestions.
-- **useChat hook** is the brain: maintains message array, session, loading flag, mode, pending permission/wizard, XP, and handles submission logic.
-- **LLM integration**: `runLLM` (utils/llm.ts) builds a session, adds system prompts, calls `generateText` from the `ai` SDK, streams tool calls/results back to UI.
-- **Tool ecosystem**: `utils/tools.ts` defines functions exposed to the LLM (e.g., file ops, web fetch, image paste). Tools are scoped per mode (chat, agent, sub‑agent) and wrapped with `withCompact` for context compaction.
-- **Orchestration**: `useChat` listens for orchestrator events (plan creation, agent start/done) and updates UI accordingly.
-- **Session persistence**: `utils/session.ts` saves/loads session to disk, enabling context continuity across runs.
-- **Cursor rule**: enforces Bun usage across the codebase, discouraging npm/yarn/vite.
-- **Extensibility**: Adding a new command or tool only requires placing a file in `src/commands` or `src/utils/tools` and exporting the appropriate interface.
+- Built with Ink's React renderer for CLI.
+- `useChat` hook maintains state: message array, session, mode, permissions, XP.
+- `runLLM` (utils/llm.ts) handles SDK integration and streaming.
+- Tools are mode-scoped in `utils/tools.ts` and auto-compacted.
+- Sessions persist to disk with context continuity.
+- Extensible via files in `/commands` or `/utils/tools`.
+- Enforces Bun usage through Cursor rules.
 
 ---
 *All information pulled from the actual source – no placeholders.*

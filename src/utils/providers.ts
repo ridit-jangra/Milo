@@ -6,6 +6,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createOllama } from "ai-sdk-ollama";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import type { LanguageModel } from "ai";
 
 export type ProviderType = "groq" | "openai" | "anthropic" | "ollama" | "openrouter";
 
@@ -82,7 +83,7 @@ export async function removeProvider(name: string): Promise<void> {
   await writeProviders(data);
 }
 
-export function buildProvider(config: ProviderConfig) {
+export function buildProvider(config: ProviderConfig): LanguageModel {
   switch (config.provider) {
     case "groq":
       return createGroq({ apiKey: config.apiKey })(config.model);

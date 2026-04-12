@@ -35,6 +35,7 @@ export type ChatMessage =
     };
 
 export interface Theme {
+  name: string;
   primary: string;
   secondary: string;
   border: string;
@@ -146,6 +147,13 @@ export interface Pet {
   streak: number;
   lastActive: Date;
   totalTasks: number;
+}
+
+export interface Human {
+  name: string;
+  gender: "male" | "female" | "other";
+  githubProfile: string;
+  defaultTheme: string;
 }
 
 export type DaemonSession = {

@@ -7,15 +7,17 @@ import {
   saveSession,
 } from "./session";
 import type { LLMOptions } from "../types";
-import { estimateTokens, shouldCompact } from "./compaction";
+import {
+  COMPACTION_THRESHOLD,
+  estimateTokens,
+  shouldCompact,
+} from "./compaction";
 
-// best-effort JSON repair for malformed tool call args
 function repairJSON(raw: string): string | null {
   try {
     JSON.parse(raw);
-    return raw; // already valid
+    return raw;
   } catch {
-    // attempt to escape literal newlines, tabs, carriage returns
     const repaired = raw
       .replace(/\n/g, "\\n")
       .replace(/\r/g, "\\r")
@@ -72,17 +74,13 @@ export async function runLLM({
     model,
     system:
       system +
-      `\n\n# Context usage\nTokens used so far: ~${tokenCount}. If this exceeds 60,000, call CompactTool immediately.` +
+      `\n\n# Context usage\nTokens used so far: ~${tokenCount}. If this exceeds ${COMPACTION_THRESHOLD}, call CompactTool immediately.` +
       toolReminder,
     messages: activeSession.messages,
     stopWhen: stepCountIs(stepLimits[mode] ?? 100),
     tools,
     abortSignal,
     experimental_repairToolCall: async ({ toolCall, error }) => {
-      console.warn(
-        `[llm] repairing tool call ${toolCall.toolName}:`,
-        error.message,
-      );
       const repaired = repairJSON(toolCall.input as string);
       if (repaired === null) return null;
       return { ...toolCall, input: JSON.parse(repaired) };

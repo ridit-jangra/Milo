@@ -10,6 +10,8 @@ import {
 } from "./sessions";
 import { handleChat } from "./chat";
 
+const DEFAULT_PORT = 6969;
+
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve) => {
     let body = "";

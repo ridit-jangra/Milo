@@ -20,6 +20,8 @@ import { StatusBar } from "../components/StatusBar";
 import { findShortcut } from "../shortcuts";
 import { PermissionCard } from "../components/permissions/PermissionCard";
 import { readPetSync } from "../pet";
+import { isBootstrap, markBootstrapDone } from "../utils/bootstrap";
+import { BootstrapWizard } from "../components/BootstrapWizard";
 
 type SubtoolMessage = Extract<
   ChatMessage,
@@ -48,6 +50,7 @@ export default function REPL(): JSX.Element {
   const [historyIndex, setHistoryIndex] = useState(0);
   const [lastTypedInput, setLastTypedInput] = useState("");
   const [modelLabel, setModelLabel] = useState("no model");
+  const [bootstrap, setBootstrap] = useState(isBootstrap());
   const [petLevel] = useState(INITIAL_PET_LEVEL);
 
   const {
@@ -64,14 +67,13 @@ export default function REPL(): JSX.Element {
     abort,
   } = useChat();
 
-  // Capture Escape globally to abort running LLM tasks even when loading spinner is shown
   useInput((_, key) => {
     if (key.escape) {
       abort();
     }
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     import("../utils/model")
       .then((m) => m.getModel())
       .then(({ modelId }) => setModelLabel(modelId))
@@ -299,7 +301,14 @@ export default function REPL(): JSX.Element {
       <Box flexDirection="column">
         <Text color={getTheme().border}>{line.repeat(columns)}</Text>
         <Box key="input-area">
-          {pendingPermission ? (
+          {bootstrap ? (
+            <BootstrapWizard
+              onDone={() => {
+                setBootstrap(false);
+                markBootstrapDone();
+              }}
+            />
+          ) : pendingPermission ? (
             <PermissionCard
               key="permission"
               permission={pendingPermission}

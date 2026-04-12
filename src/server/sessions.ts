@@ -37,11 +37,11 @@ export function deleteDaemonSession(id: string): boolean {
   return active.delete(id);
 }
 
-export function listDaemonSessions() {
+export function listDaemonSessions(): { id: string; createdAt: number; updatedAt: number }[] {
   return listSessions();
 }
 
-export function updateDaemonSession(id: string, session: Session) {
+export function updateDaemonSession(id: string, session: Session): void {
   const entry = active.get(id);
   if (!entry) return;
   entry.session = session;

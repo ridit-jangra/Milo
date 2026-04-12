@@ -3,8 +3,7 @@ import { getModel } from "./model";
 import type { Session } from "./session";
 import type { ModelMessage } from "ai";
 
-const COMPACTION_THRESHOLD = 80000;
-// const KEEP_RECENT = 20;
+export const COMPACTION_THRESHOLD = 80000;
 
 export function estimateTokens(messages: ModelMessage[]): number {
   const text = JSON.stringify(messages);

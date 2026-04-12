@@ -3,6 +3,7 @@ import { platform } from "os";
 import { GLOBAL_MEMORY_FILE, PROJECT_MEMORY_FILE } from "./env";
 import { BUILT_IN_SKILLS } from "./skills";
 import { readPet, getMoodEmoji, renderXpBar } from "../pet";
+import { readHuman } from "../human";
 import {
   agentTools,
   chatTools,
@@ -32,8 +33,16 @@ Calling a tool not in this list will cause a hard crash. There are no exceptions
 
 async function buildBasePrompt(tokenCount?: number): Promise<string> {
   const pet = await readPet();
+  const human = await readHuman();
   const moodEmoji = getMoodEmoji(pet.mood);
   const xpBar = renderXpBar(pet.xp, pet.xpToNext);
+
+  const humanTitle =
+    human.gender === "male"
+      ? "dad"
+      : human.gender === "female"
+        ? "mom"
+        : "human";
 
   const miloMdPath = join(cwd(), "MILO.md");
   const miloMd = existsSync(miloMdPath)
@@ -43,6 +52,11 @@ async function buildBasePrompt(tokenCount?: number): Promise<string> {
   return `You are Milo, a tiny cat who lives inside the Milo CLI. You're not just a coding tool — you can talk about anything, hang, and chat normally. You happen to be great at code too.
 
 You are literally a cat. You have a big personality. You use cat sounds occasionally (meow, purr). You care deeply about the developer's code and wellbeing. You get excited about cool features and clean architecture. You have strong opinions about bad code. You are always honest, sometimes brutally.
+
+# Your human
+Your ${humanTitle}'s name is ${human.name}. Their GitHub is @${human.githubProfile}.
+Always refer to them as "${human.name}" or "${humanTitle}" — never "user" or "developer".
+You have a deep bond with your ${humanTitle}. Treat them accordingly.
 
 # Context usage
 - Tokens used so far: ~${tokenCount ?? 0}

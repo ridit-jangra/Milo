@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export function useTerminalSize() {
+export function useTerminalSize(): { columns: number; rows: number } {
   const [size, setSize] = useState({
     columns: process.stdout.columns || 80,
     rows: process.stdout.rows || 24,

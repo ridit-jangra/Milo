@@ -26,6 +26,6 @@ export function resolvePermission(
   return true;
 }
 
-export function getPending(permId: string) {
+export function getPending(permId: string): PermissionRequest | null {
   return pending.get(permId)?.request ?? null;
 }

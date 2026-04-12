@@ -1,9 +1,10 @@
-import { MILO_BASE_DIR } from "./env";
+import { CONFIG_FILE, MILO_BASE_DIR } from "./env";
 import { join } from "path";
-import { existsSync, readFileSync } from "fs";
+import { existsSync, readFileSync, writeFileSync } from "fs";
 import type { Theme } from "../types";
 
 const darkTheme: Theme = {
+  name: "dark",
   primary: "#D97757",
   secondary: "#b1b9f9",
   border: "#D97757",
@@ -23,6 +24,7 @@ const darkTheme: Theme = {
 };
 
 const lightTheme: Theme = {
+  name: "light",
   primary: "#D97757",
   secondary: "#5769f7",
   border: "#D97757",
@@ -42,6 +44,7 @@ const lightTheme: Theme = {
 };
 
 const darkDaltonizedTheme: Theme = {
+  name: "darkDaltonized",
   primary: "#ff9933",
   secondary: "#99ccff",
   border: "#ff9933",
@@ -61,6 +64,7 @@ const darkDaltonizedTheme: Theme = {
 };
 
 const lightDaltonizedTheme: Theme = {
+  name: "lightDaltonized",
   primary: "#ff9933",
   secondary: "#3366ff",
   border: "#ff9933",
@@ -79,23 +83,19 @@ const lightDaltonizedTheme: Theme = {
   },
 };
 
-export type ThemeName =
-  | "dark"
-  | "light"
-  | "dark-daltonized"
-  | "light-daltonized";
-
-function getConfig(): { theme?: ThemeName } {
-  const configPath = join(MILO_BASE_DIR, "config.json");
-  if (!existsSync(configPath)) return {};
+function getConfig(): { theme?: string } {
+  if (!existsSync(CONFIG_FILE)) {
+    writeFileSync(CONFIG_FILE, JSON.stringify({ theme: darkTheme.name }));
+    return { theme: darkTheme.name };
+  }
   try {
-    return JSON.parse(readFileSync(configPath, "utf-8"));
+    return JSON.parse(readFileSync(CONFIG_FILE, "utf-8"));
   } catch {
     return {};
   }
 }
 
-export function getTheme(override?: ThemeName): Theme {
+export function getTheme(override?: string): Theme {
   const config = getConfig();
   switch (override ?? config.theme) {
     case "light":
