@@ -8,3 +8,5 @@ src/
 *.map
 tests/
 *.md
+test.http
+tsconfig.json

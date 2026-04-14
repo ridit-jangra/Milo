@@ -4,7 +4,9 @@ A tiny cat that lives in your terminal.
 
 You talk to it. It writes code, reads files, runs commands, searches the web, and remembers things across sessions. It also gains XP, levels up, and gets sad if you don't feed it.
 
-[![Watch the video](https://img.youtube.com/vi/JGYGLF7jdwI/0.jpg)](https://youtu.be/JGYGLF7jdwI)
+![Preview!!](./preview/image.png)
+
+[Watch the video](https://youtu.be/JGYGLF7jdwI)
 
 ---
 
