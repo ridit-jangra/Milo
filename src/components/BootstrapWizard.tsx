@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { getTheme } from "../utils/theme";
-import { writeHumn, readHuman } from "../human";
+import { writeHuman, readHuman } from "../human";
 import type { Human } from "../types";
 import { arrowLeft, arrowRight, tick, upDownArrow } from "../icons";
 
@@ -11,8 +11,22 @@ type Props = {
 
 const GENDERS: Human["gender"][] = ["male", "female", "other"];
 const THEMES = ["dark", "light", "system"];
+const COMM_STYLES: NonNullable<Human["communicationStyle"]>[] = [
+  "brief",
+  "detailed",
+];
 
-const FIELDS = ["name", "gender", "githubProfile", "defaultTheme"] as const;
+const FIELDS = [
+  "name",
+  "gender",
+  "githubProfile",
+  "defaultTheme",
+  "bio",
+  "preferredLanguages",
+  "editor",
+  "communicationStyle",
+  "timezone",
+] as const;
 type Field = (typeof FIELDS)[number];
 
 const LABELS: Record<Field, string> = {
@@ -20,14 +34,33 @@ const LABELS: Record<Field, string> = {
   gender: "gender",
   githubProfile: "github username",
   defaultTheme: "default theme",
+  bio: "about you",
+  preferredLanguages: "preferred languages",
+  editor: "your editor",
+  communicationStyle: "communication style",
+  timezone: "timezone",
 };
 
 const HINTS: Record<Field, string> = {
   name: "enter to confirm",
   gender: `${arrowLeft} ${arrowRight} to select · enter to confirm`,
-  githubProfile: "enter to confirm",
+  githubProfile: "enter your github username to sync repos · or skip",
   defaultTheme: `${arrowLeft} ${arrowRight} to select · enter to confirm`,
+  bio: "what you build, your interests · enter to confirm · or skip",
+  preferredLanguages:
+    "comma separated e.g. typescript, python · enter to confirm · or skip",
+  editor: "e.g. meridia, vscode · enter to confirm · or skip",
+  communicationStyle: `${arrowLeft} ${arrowRight} to select · enter to confirm`,
+  timezone: "e.g. Asia/Kolkata · enter to confirm · or skip",
 };
+
+const OPTIONAL_FIELDS: Field[] = [
+  "bio",
+  "preferredLanguages",
+  "editor",
+  "timezone",
+  "githubProfile",
+];
 
 export function BootstrapWizard({ onDone }: Props): React.ReactNode {
   const theme = getTheme();
@@ -35,21 +68,60 @@ export function BootstrapWizard({ onDone }: Props): React.ReactNode {
   const [step, setStep] = useState(0);
   const [genderIndex, setGenderIndex] = useState(0);
   const [themeIndex, setThemeIndex] = useState(0);
+  const [commIndex, setCommIndex] = useState(0);
   const [inputBuffer, setInputBuffer] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const [values, setValues] = useState<
-    Omit<Human, "gender" | "defaultTheme"> & {
-      gender: Human["gender"];
-      defaultTheme: string;
-    }
-  >({
+  const [values, setValues] = useState<Record<Field, string>>({
     name: "",
     gender: "other",
     githubProfile: "",
     defaultTheme: "dark",
+    bio: "",
+    preferredLanguages: "",
+    editor: "",
+    communicationStyle: "brief",
+    timezone: "",
   });
+
+  function finish(finalValues: Record<Field, string>) {
+    setSaving(true);
+    const human: Human = {
+      name: finalValues.name,
+      gender: finalValues.gender as Human["gender"],
+      githubProfile: finalValues.githubProfile,
+      defaultTheme: finalValues.defaultTheme,
+      bio: finalValues.bio || undefined,
+      preferredLanguages: finalValues.preferredLanguages
+        ? finalValues.preferredLanguages
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : undefined,
+      editor: finalValues.editor || undefined,
+      communicationStyle:
+        (finalValues.communicationStyle as Human["communicationStyle"]) ||
+        undefined,
+      timezone: finalValues.timezone || undefined,
+    };
+    writeHuman(human)
+      .then(() => onDone(`welcome, ${human.name} 👋`))
+      .catch((e) => {
+        setSaving(false);
+        setError(String(e));
+      });
+  }
+
+  function nextStep(overrideValues?: Record<Field, string>) {
+    const v = overrideValues ?? values;
+    if (step === FIELDS.length - 1) {
+      finish(v);
+    } else {
+      setStep((s) => s + 1);
+      setInputBuffer("");
+    }
+  }
 
   useInput((input, key) => {
     if (saving) return;
@@ -62,7 +134,6 @@ export function BootstrapWizard({ onDone }: Props): React.ReactNode {
 
     const currentField = FIELDS[step];
 
-    // ── selector fields ──────────────────────────────────────────
     if (currentField === "gender") {
       if (key.leftArrow) {
         const next = Math.max(0, genderIndex - 1);
@@ -77,9 +148,9 @@ export function BootstrapWizard({ onDone }: Props): React.ReactNode {
         return;
       }
       if (key.return) {
-        setValues((v) => ({ ...v, gender: GENDERS[genderIndex]! }));
-        setStep((s) => s + 1);
-        setInputBuffer("");
+        const updated = { ...values, gender: GENDERS[genderIndex]! };
+        setValues(updated);
+        nextStep(updated);
         return;
       }
       return;
@@ -99,32 +170,49 @@ export function BootstrapWizard({ onDone }: Props): React.ReactNode {
         return;
       }
       if (key.return) {
-        const newValues: Human = {
-          ...values,
-          defaultTheme: THEMES[themeIndex]!,
-        };
-        setSaving(true);
-        writeHumn(newValues)
-          .then(() => onDone(`welcome, ${newValues.name} 👋`))
-          .catch((e) => {
-            setSaving(false);
-            setError(String(e));
-          });
+        const updated = { ...values, defaultTheme: THEMES[themeIndex]! };
+        setValues(updated);
+        nextStep(updated);
         return;
       }
       return;
     }
 
-    // ── text fields ───────────────────────────────────────────────
+    if (currentField === "communicationStyle") {
+      if (key.leftArrow) {
+        const next = Math.max(0, commIndex - 1);
+        setCommIndex(next);
+        setValues((v) => ({ ...v, communicationStyle: COMM_STYLES[next]! }));
+        return;
+      }
+      if (key.rightArrow) {
+        const next = Math.min(COMM_STYLES.length - 1, commIndex + 1);
+        setCommIndex(next);
+        setValues((v) => ({ ...v, communicationStyle: COMM_STYLES[next]! }));
+        return;
+      }
+      if (key.return) {
+        const updated = {
+          ...values,
+          communicationStyle: COMM_STYLES[commIndex]!,
+        };
+        setValues(updated);
+        nextStep(updated);
+        return;
+      }
+      return;
+    }
+
+    // text fields
     if (key.return) {
-      if (inputBuffer.trim() === "") {
+      const isOptional = OPTIONAL_FIELDS.includes(currentField!);
+      if (!isOptional && inputBuffer.trim() === "") {
         setError("this field is required");
         return;
       }
-      const newValues = { ...values, [currentField!]: inputBuffer.trim() };
-      setValues(newValues);
-      setStep((s) => s + 1);
-      setInputBuffer("");
+      const updated = { ...values, [currentField!]: inputBuffer.trim() };
+      setValues(updated);
+      nextStep(updated);
       return;
     }
 
@@ -142,7 +230,6 @@ export function BootstrapWizard({ onDone }: Props): React.ReactNode {
 
   return (
     <Box flexDirection="column" paddingX={1} paddingY={1}>
-      {/* header */}
       <Box flexDirection="row" marginBottom={1} gap={2}>
         <Text color={theme.primary}>setup profile</Text>
         <Text color={theme.secondaryText} dimColor>
@@ -150,7 +237,6 @@ export function BootstrapWizard({ onDone }: Props): React.ReactNode {
         </Text>
       </Box>
 
-      {/* completed steps */}
       {FIELDS.slice(0, step).map((f) => (
         <Box key={f} flexDirection="row" gap={2} paddingX={1}>
           <Text color={theme.success}>{tick}</Text>
@@ -159,7 +245,6 @@ export function BootstrapWizard({ onDone }: Props): React.ReactNode {
         </Box>
       ))}
 
-      {/* active step */}
       {!saving && currentField && (
         <>
           <Box flexDirection="row" gap={2} paddingX={1} marginTop={1}>
@@ -194,9 +279,22 @@ export function BootstrapWizard({ onDone }: Props): React.ReactNode {
               </Box>
             )}
 
-            {currentField !== "gender" && currentField !== "defaultTheme" && (
-              <Text color={theme.text}>{inputBuffer + "█"}</Text>
+            {currentField === "communicationStyle" && (
+              <Box flexDirection="row" gap={1}>
+                {COMM_STYLES.map((c, i) => (
+                  <Text
+                    key={c}
+                    color={i === commIndex ? theme.error : theme.secondaryText}
+                  >
+                    {c}
+                  </Text>
+                ))}
+              </Box>
             )}
+
+            {!["gender", "defaultTheme", "communicationStyle"].includes(
+              currentField,
+            ) && <Text color={theme.text}>{inputBuffer + "█"}</Text>}
           </Box>
 
           <Box marginTop={1} marginLeft={4}>

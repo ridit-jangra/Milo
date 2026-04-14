@@ -1,44 +1,43 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { readFileSync, existsSync } from "fs";
+import { readFileSync, existsSync, readdirSync } from "fs";
 import { join } from "path";
 import { MEMORY_DIR } from "../../utils/env";
 import { DESCRIPTION, PROMPT } from "./prompt";
-
-const memoryCache = new Map<string, string>();
 
 export const MemoryReadTool = tool({
   title: "MemoryRead",
   description: DESCRIPTION + "\n\n" + PROMPT,
   inputSchema: z.object({
-    file_path: z
+    name: z
       .string()
-      .describe("Relative path inside memory dir e.g. MEMORY.md"),
+      .describe(
+        'Memory file name to read (e.g. "user.md", "meridia.md"), or "list" to see all available files',
+      ),
   }),
-  execute: async ({ file_path }) => {
+  execute: async ({ name }) => {
     try {
-      if (memoryCache.has(file_path)) {
-        return {
-          success: true,
-          content: memoryCache.get(file_path)!,
-          cached: true,
-        };
+      if (!existsSync(MEMORY_DIR)) {
+        return { success: true, content: "", message: "No memory files found" };
       }
 
-      const fullPath = join(MEMORY_DIR, file_path);
+      if (name === "list") {
+        const files = readdirSync(MEMORY_DIR).filter(
+          (f) => f.endsWith(".md") || f.endsWith(".mdc"),
+        );
+        return { success: true, files };
+      }
+
+      const fullPath = join(MEMORY_DIR, name);
       if (!fullPath.startsWith(MEMORY_DIR)) {
         return { success: false, error: "Invalid memory file path" };
       }
-      if (!existsSync(fullPath)) {
-        return {
-          success: true,
-          content: "",
-          message: "Memory file does not exist yet",
-        };
-      }
-      const content = readFileSync(fullPath, "utf-8");
 
-      memoryCache.set(file_path, content);
+      if (!existsSync(fullPath)) {
+        return { success: false, message: `Memory file "${name}" not found` };
+      }
+
+      const content = readFileSync(fullPath, "utf-8");
       return { success: true, content };
     } catch (err) {
       return { success: false, error: String(err) };

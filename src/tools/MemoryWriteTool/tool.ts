@@ -9,14 +9,16 @@ export const MemoryWriteTool = tool({
   title: "MemoryWrite",
   description: DESCRIPTION + "\n\n" + PROMPT,
   inputSchema: z.object({
-    file_path: z
-      .string()
-      .describe("Relative path inside memory dir e.g. MEMORY.md"),
     content: z.string().describe("Full content to write to the memory file"),
+    name: z
+      .string()
+      .describe(
+        "Memory name that you thinks fits. use casing like this word1-word2-...md",
+      ),
   }),
-  execute: async ({ file_path, content }) => {
+  execute: async ({ name, content }) => {
     try {
-      const fullPath = join(MEMORY_DIR, file_path);
+      const fullPath = join(MEMORY_DIR, name);
       if (!fullPath.startsWith(MEMORY_DIR)) {
         return { success: false, error: "Invalid memory file path" };
       }

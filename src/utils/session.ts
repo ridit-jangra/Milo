@@ -1,7 +1,7 @@
 import type { ModelMessage } from "ai";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
-import { GLOBAL_MEMORY_FILE, PROJECT_MEMORY_FILE, SESSIONS_DIR } from "./env";
+import { PROJECT_MEMORY_FILE, SESSIONS_DIR } from "./env";
 
 export type Session = {
   id: string;
@@ -69,18 +69,11 @@ export function listSessions(): {
 export function loadMemoryIntoSession(session: Session): Session {
   if (session.memoryLoaded) return session;
 
-  const globalMem = existsSync(GLOBAL_MEMORY_FILE)
-    ? readFileSync(GLOBAL_MEMORY_FILE, "utf-8")
-    : "";
-
   const projectMem = existsSync(PROJECT_MEMORY_FILE)
     ? readFileSync(PROJECT_MEMORY_FILE, "utf-8")
     : "";
 
-  const memoryContext = [
-    globalMem ? `# Global Memory\n${globalMem}` : "",
-    projectMem ? `# Project Memory\n${projectMem}` : "",
-  ]
+  const memoryContext = [projectMem ? `# Project Memory\n${projectMem}` : ""]
     .filter(Boolean)
     .join("\n\n");
 

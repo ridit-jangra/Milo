@@ -1,10 +1,7 @@
-export const DESCRIPTION = "Write content to a persistent memory file.";
-export const PROMPT = `Saves information to ~/.milo/memory/ for use across sessions.
+export const DESCRIPTION = "Read a persistent memory file.";
+export const PROMPT = `Reads memory to recall information from past sessions.
 
-Use this to remember:
-- User preferences and conventions
-- Project-specific context (stack, patterns, rules)
-- Anything the user explicitly asks you to remember
-
-Always write to MEMORY.md unless the user specifies otherwise.
-Content should be concise markdown.`;
+Use this when the user references something you don't recognize or remember.
+Pass the name of the memory file you want to read.
+If unsure what file to read, pass "list" to see all available memory files.
+Even if not found in memory, tell the user you don't know or ask them to tell you.`;

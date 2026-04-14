@@ -9,15 +9,13 @@ export const MemoryEditTool = tool({
   title: "MemoryEdit",
   description: DESCRIPTION + "\n\n" + PROMPT,
   inputSchema: z.object({
-    file_path: z
-      .string()
-      .describe("Relative path inside memory dir e.g. MEMORY.md"),
+    name: z.string().describe("Name of the memory file."),
     old_string: z.string().describe("The string to replace"),
     new_string: z.string().describe("The replacement string"),
   }),
-  execute: async ({ file_path, old_string, new_string }) => {
+  execute: async ({ name, old_string, new_string }) => {
     try {
-      const fullPath = join(MEMORY_DIR, file_path);
+      const fullPath = join(MEMORY_DIR, name);
       if (!fullPath.startsWith(MEMORY_DIR)) {
         return { success: false, error: "Invalid memory file path" };
       }

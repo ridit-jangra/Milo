@@ -154,6 +154,11 @@ export interface Human {
   gender: "male" | "female" | "other";
   githubProfile: string;
   defaultTheme: string;
+  preferredLanguages?: string[];
+  editor?: string;
+  communicationStyle?: "brief" | "detailed";
+  timezone?: string;
+  bio?: string;
 }
 
 export type DaemonSession = {

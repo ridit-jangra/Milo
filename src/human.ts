@@ -31,7 +31,7 @@ export async function readHuman(): Promise<Human> {
   }
 }
 
-export async function writeHumn(human: Human): Promise<void> {
+export async function writeHuman(human: Human): Promise<void> {
   await mkdir(dirname(HUMAN_FILE), { recursive: true });
   await writeFile(HUMAN_FILE, JSON.stringify(human, null, 2), "utf-8");
 }

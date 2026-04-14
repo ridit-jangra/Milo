@@ -1,3 +1,5 @@
+import type { OnOrchestratorEvent } from "../types";
+import type { Session } from "../utils/session";
 import { AgentTool } from "../tools/AgentTool/tool";
 import { BashTool } from "../tools/BashTool/tool";
 import { FileEditTool } from "../tools/FileEditTool/tool";
@@ -14,10 +16,9 @@ import { RecallTool } from "../tools/RecallTool/tool";
 import { ThinkTool } from "../tools/ThinkTool/tool";
 import { WebFetchTool } from "../tools/WebFetchTool/tool";
 import { WebSearchTool } from "../tools/WebSearchTool/tool";
-import type { OnOrchestratorEvent } from "../types";
-import type { Session } from "../utils/session";
 import { ReadManyFilesTool } from "../tools/ReadManyFileTool/tool";
 import { DownloadTool } from "../tools/DownloadTool/tool";
+import { HumanEditTool } from "../tools/HumanEditTool/tool";
 
 export const agentTools = {
   FileReadTool,
@@ -36,6 +37,7 @@ export const agentTools = {
   WebSearchTool,
   ReadManyFilesTool,
   DownloadTool,
+  HumanEditTool,
 };
 
 export const orchestratorAgentTools = {
@@ -80,6 +82,7 @@ export const chatTools = {
   WebFetchTool,
   WebSearchTool,
   ReadManyFilesTool,
+  HumanEditTool,
 };
 
 export function withCompact(

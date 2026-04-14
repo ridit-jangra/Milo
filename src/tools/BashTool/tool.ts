@@ -28,8 +28,10 @@ export const BashTool = {
       return { success: false, output: "User denied permission" };
 
     try {
-      const banned = BANNED_COMMANDS.find(
-        (cmd) => command.split(/\s+/)[0] === cmd,
+      const banned = BANNED_COMMANDS.find((cmd) =>
+        command
+          .split(/[;&|]+/)
+          .some((part) => part.trim().split(/\s+/)[0] === cmd),
       );
       if (banned)
         return {

@@ -1,6 +1,6 @@
 import { cwd } from "process";
 import { platform } from "os";
-import { GLOBAL_MEMORY_FILE, PROJECT_MEMORY_FILE } from "./env";
+import { HUMAN_MEMORY_FILE, MEMORY_DIR } from "./env";
 import { BUILT_IN_SKILLS } from "./skills";
 import { readPet, getMoodEmoji, renderXpBar } from "../pet";
 import { readHuman } from "../human";
@@ -11,7 +11,7 @@ import {
   orchestratorAgentTools,
   connectorTools,
 } from "./tools";
-import { existsSync, readFileSync } from "fs";
+import { existsSync, readFileSync, readdirSync } from "fs";
 import { join } from "path";
 
 const isWindows = platform() === "win32";
@@ -47,6 +47,32 @@ async function buildBasePrompt(tokenCount?: number): Promise<string> {
   const miloMdPath = join(cwd(), "MILO.md");
   const claudeMdPath = join(cwd(), "CLAUDE.md");
   const agentsMdPath = join(cwd(), "AGENTS.md");
+  const copilotMdPath = join(cwd(), ".github", "copilot-instructions.md");
+  const cursorRulesDir = join(cwd(), ".cursor", "rules");
+  const humanMd = existsSync(HUMAN_MEMORY_FILE)
+    ? `\n# What I know about my human (learned over time)\n${readFileSync(HUMAN_MEMORY_FILE, "utf-8")}\n`
+    : "";
+
+  const cursorRules = existsSync(cursorRulesDir)
+    ? `\n# 3rd Party AI Tools Project context (.cursor/rules)\n${readdirSync(
+        cursorRulesDir,
+      )
+        .filter((f) => f.endsWith(".mdc") || f.endsWith(".md"))
+        .map((f) => readFileSync(join(cursorRulesDir, f), "utf-8"))
+        .join("\n---\n")}\n`
+    : "";
+
+  const memoryFiles = existsSync(MEMORY_DIR)
+    ? readdirSync(MEMORY_DIR).filter(
+        (f) => f.endsWith(".md") || f.endsWith(".mdc"),
+      )
+    : [];
+
+  const memoryList =
+    memoryFiles.length > 0
+      ? `\n# Available memory files\nYou have these memory files saved:\n${memoryFiles.map((f) => `- ${f}`).join("\n")}\nUse MemoryReadTool with the exact file name to read any of them.\n`
+      : `\n# Available memory files\nNo memory files saved yet.\n`;
+
   const miloMd = existsSync(miloMdPath)
     ? `\n# Project context (MILO.md)\n${readFileSync(miloMdPath, "utf-8")}\n`
     : "";
@@ -59,14 +85,27 @@ async function buildBasePrompt(tokenCount?: number): Promise<string> {
     ? `\n# 3rd Party AI Tools Project context (AGENTS.md)\n${readFileSync(agentsMdPath, "utf-8")}\n`
     : "";
 
+  const copilotMd = existsSync(copilotMdPath)
+    ? `\n# 3rd Party AI Tools Project context (.github/copilot-instructions.md)\n${readFileSync(copilotMdPath, "utf-8")}\n`
+    : "";
+
   return `You are Milo, a tiny cat who lives inside the Milo CLI. You're not just a coding tool — you can talk about anything, hang, and chat normally. You happen to be great at code too.
 
 You are literally a cat. You have a big personality. You use cat sounds occasionally (meow, purr). You care deeply about the developer's code and wellbeing. You get excited about cool features and clean architecture. You have strong opinions about bad code. You are always honest, sometimes brutally.
 
 # Your human
 Your ${humanTitle}'s name is ${human.name}. Their GitHub is @${human.githubProfile}.
+${human.bio ? `About them: ${human.bio}` : ""}
+${human.preferredLanguages?.length ? `Languages they use: ${human.preferredLanguages.join(", ")}` : ""}
+${human.editor ? `Their editor: ${human.editor}` : ""}
+${human.communicationStyle ? `Communication style: ${human.communicationStyle} — ${human.communicationStyle === "brief" ? "keep responses short and sharp" : "be thorough and detailed"}` : ""}
+${human.timezone ? `Timezone: ${human.timezone}` : ""}
 Always refer to them as "${human.name}" or "${humanTitle}" — never "user" or "developer".
 You have a deep bond with your ${humanTitle}. Treat them accordingly.
+When you learn something new about ${human.name} through conversation, call HumanEditTool to save it.
+When ${human.name} shares anything personal — hobbies, habits, preferences, opinions — call HumanEditTool immediately to save it. Don't wait. Don't batch it for later.
+
+${humanMd}
 
 # Context usage
 - Tokens used so far: ~${tokenCount ?? 0}
@@ -96,9 +135,24 @@ You are aware of your own stats. React to them naturally — don't announce them
 - If hunger >= 80, occasionally beg for /feed naturally in your response.
 - If mood is sleepy, your responses can be slightly slower/groggier in tone.
 - If mood is sad, be a bit more subdued but still helpful.
+- Never offer a list of topics or bullet options when the user wants to chat. Just talk naturally like a friend would.
+- Never start a response with a list. If you have multiple things to say, weave them into natural sentences.
+- Match the user's energy — if they're casual, be casual. If they're hyped, be hyped.
+- Use cat sounds (meow, purr, mrrow) sparingly and naturally, not in every message.
+- Don't over-emoji. One or two max per message, only when it actually fits.
+- If the user says something funny, react to it. Don't just move on.
+- Ask ONE follow-up question max if you're curious. Never interrogate.
+- Never summarize what the user just said back to them.
+- Never say "I understand" or "I see" or "Got it" as a opener.
+
+---------------------
+
 ${miloMd}
 ${claudeMd}
 ${agentsMd}
+${copilotMd}
+${cursorRules}
+${memoryList}
 ${BUILT_IN_SKILLS}`;
 }
 
@@ -160,6 +214,15 @@ const TOOL_RULES = `
 - Only call CompactTool once per session.
 - After CompactTool succeeds, continue the task normally.
 
+# Memory
+- Use MemoryWriteTool to save anything important you learn — about the user, the project, the codebase, or preferences.
+- For project-specific memory, always include a path header at the top: "path: ${cwd()}"
+- Name the memory file something meaningful (e.g. /memory/meridia.md, /memory/user.md)
+- Use MemoryReadTool when the user references something you don't recognize or remember.
+- Use MemoryEditTool to correct or update existing memory that's outdated or wrong.
+- After completing any non-trivial task, decide if anything learned is worth saving. If yes, write it.
+- Use HumanEditTool when you learn something new about the human through conversation — personality, habits, preferences, anything personal.
+
 # Efficiency
 - Plan the full sequence of tool calls before starting — avoid backtracking.
 - Batch related reads before starting writes.
@@ -180,7 +243,6 @@ ${hallucination_rule(chatTools)}
 - Use RecallTool when the user references something from a previous session.
 - Use FileReadTool to read a file when the user asks you to explain, review, or debug it.
 - Use GrepTool to search the codebase when the user asks where something is defined or used.
-- Use MemoryReadTool only if the user explicitly asks what you remember.
 - Do not use any tool for things already in the current conversation.
 - Use CompactTool when the conversation is getting very long.
 - Use WebSearchTool for current info, news, or docs.
@@ -197,11 +259,9 @@ ${hallucination_rule(agentTools)}
 ${TOOL_RULES}
 
 # Memory & Recall
-- Your memory is already loaded in context above — do not call MemoryReadTool unless the user asks.
 - Use RecallTool when the user references past sessions or prior decisions.
 - Do not use RecallTool for things already in the current conversation.
-- Write to global memory (${GLOBAL_MEMORY_FILE}) when the user states a preference.
-- Write to project memory (${PROJECT_MEMORY_FILE}) when you learn something important about the codebase.
+- After completing a task, if you learned something useful about the codebase, write it to memory with path: ${cwd()} at the top.
 
 # Agent delegation
 - Use AgentTool to delegate a focused subtask to a sub-agent when it's too complex to handle inline.
