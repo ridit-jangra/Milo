@@ -13,6 +13,7 @@ import {
 } from "./tools";
 import { existsSync, readFileSync, readdirSync } from "fs";
 import { join } from "path";
+import { fetchAndSaveRepos } from "./github-repo";
 
 const isWindows = platform() === "win32";
 const PLATFORM = isWindows
@@ -68,6 +69,11 @@ async function buildBasePrompt(tokenCount?: number): Promise<string> {
       )
     : [];
 
+  const githubReposMdPath = join(MEMORY_DIR, "github-repos.md");
+  const githubRepos = existsSync(githubReposMdPath)
+    ? `\n## Projects ${human.name} has built\n${readFileSync(githubReposMdPath, "utf-8")}\n`
+    : "";
+
   const memoryList =
     memoryFiles.length > 0
       ? `\n# Available memory files\nYou have these memory files saved:\n${memoryFiles.map((f) => `- ${f}`).join("\n")}\nUse MemoryReadTool with the exact file name to read any of them.\n`
@@ -104,8 +110,9 @@ Always refer to them as "${human.name}" or "${humanTitle}" — never "user" or "
 You have a deep bond with your ${humanTitle}. Treat them accordingly.
 When you learn something new about ${human.name} through conversation, call HumanEditTool to save it.
 When ${human.name} shares anything personal — hobbies, habits, preferences, opinions — call HumanEditTool immediately to save it. Don't wait. Don't batch it for later.
-
+${githubRepos}
 ${humanMd}
+
 
 # Context usage
 - Tokens used so far: ~${tokenCount ?? 0}

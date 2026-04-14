@@ -152,7 +152,7 @@ export interface Pet {
 export interface Human {
   name: string;
   gender: "male" | "female" | "other";
-  githubProfile: string;
+  githubProfile?: string;
   defaultTheme: string;
   preferredLanguages?: string[];
   editor?: string;
