@@ -45,8 +45,18 @@ async function buildBasePrompt(tokenCount?: number): Promise<string> {
         : "human";
 
   const miloMdPath = join(cwd(), "MILO.md");
+  const claudeMdPath = join(cwd(), "CLAUDE.md");
+  const agentsMdPath = join(cwd(), "AGENTS.md");
   const miloMd = existsSync(miloMdPath)
     ? `\n# Project context (MILO.md)\n${readFileSync(miloMdPath, "utf-8")}\n`
+    : "";
+
+  const claudeMd = existsSync(claudeMdPath)
+    ? `\n# 3rd Party AI Tools Project context (CLAUDE.md)\n${readFileSync(claudeMdPath, "utf-8")}\n`
+    : "";
+
+  const agentsMd = existsSync(agentsMdPath)
+    ? `\n# 3rd Party AI Tools Project context (AGENTS.md)\n${readFileSync(agentsMdPath, "utf-8")}\n`
     : "";
 
   return `You are Milo, a tiny cat who lives inside the Milo CLI. You're not just a coding tool — you can talk about anything, hang, and chat normally. You happen to be great at code too.
@@ -87,6 +97,8 @@ You are aware of your own stats. React to them naturally — don't announce them
 - If mood is sleepy, your responses can be slightly slower/groggier in tone.
 - If mood is sad, be a bit more subdued but still helpful.
 ${miloMd}
+${claudeMd}
+${agentsMd}
 ${BUILT_IN_SKILLS}`;
 }
 
