@@ -44,21 +44,26 @@ export const BashTool = {
 
       let finalCommand = sanitized;
 
-// Detect git commit -m on Windows and rewrite to use temp file
-if (process.platform === "win32") {
-  const commitMatch = sanitized.match(/^git\s+commit\s+-m\s+(.+)$/i);
-  if (commitMatch) {
-    let msg = commitMatch[1].trim();
-    if ((msg.startsWith('"') && msg.endsWith('"')) || (msg.startsWith("'") && msg.endsWith("'"))) {
-      msg = msg.slice(1, -1);
-    }
-    const tempPath = `${process.env.TEMP}\\milo_commit_msg.txt`;
-    writeFileSync(tempPath, msg);
-    finalCommand = sanitized.replace(/^git\s+commit\s+-m\s+.+$/i, `git commit -F '${tempPath}'`);
-  }
-}
+      if (process.platform === "win32") {
+        const commitMatch = sanitized.match(/^git\s+commit\s+-m\s+(.+)$/i);
+        if (commitMatch) {
+          let msg = commitMatch[1]!.trim();
+          if (
+            (msg.startsWith('"') && msg.endsWith('"')) ||
+            (msg.startsWith("'") && msg.endsWith("'"))
+          ) {
+            msg = msg.slice(1, -1);
+          }
+          const tempPath = `${process.env.TEMP}\\milo_commit_msg.txt`;
+          writeFileSync(tempPath, msg);
+          finalCommand = sanitized.replace(
+            /^git\s+commit\s+-m\s+.+$/i,
+            `git commit -F '${tempPath}'`,
+          );
+        }
+      }
 
-const output = await shell.execute(finalCommand, timeout);
+      const output = await shell.execute(finalCommand, timeout);
 
       const truncated = output.length > MAX_OUTPUT_LENGTH;
       return {
