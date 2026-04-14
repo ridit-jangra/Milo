@@ -1,4 +1,8 @@
-export async function fetchAndSaveRepos(githubProfile: string) {
+import { mkdirSync, writeFileSync } from "fs";
+import { join } from "path";
+import { GITHUB_REPOS_FILE, MEMORY_DIR } from "../utils/env";
+
+export async function fetchRepos(githubProfile: string): Promise<void> {
   try {
     const res = await fetch(
       `https://api.github.com/users/${githubProfile}/repos?sort=updated&per_page=20`,
@@ -13,18 +17,14 @@ export async function fetchAndSaveRepos(githubProfile: string) {
     }>;
 
     const md = `# GitHub Repositories for @${githubProfile}
-  fetched at setup · sorted by recently updated
-  
-  ${repos.map((r) => `- **${r.name}** ${r.language ? `[${r.language}]` : ""} — ${r.description ?? "no description"} (⭐ ${r.stargazers_count})`).join("\n")}
-  `;
+sorted by recently updated
 
-    const { mkdirSync, writeFileSync } = await import("fs");
-    const { join, dirname } = await import("path");
-    const { MEMORY_DIR } = await import("../utils/env");
-    const filePath = join(MEMORY_DIR, "github-repos.md");
-    mkdirSync(dirname(filePath), { recursive: true });
-    writeFileSync(filePath, md, "utf-8");
+${repos.map((r) => `- **${r.name}** ${r.language ? `[${r.language}]` : ""} — ${r.description ?? "no description"} (⭐ ${r.stargazers_count})`).join("\n")}
+`;
+
+    mkdirSync(MEMORY_DIR, { recursive: true });
+    writeFileSync(join(GITHUB_REPOS_FILE), md, "utf-8");
   } catch {
-    // silently fail — not critical
+    // silently fail
   }
 }

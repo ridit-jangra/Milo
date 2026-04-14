@@ -1,6 +1,6 @@
 import { cwd } from "process";
 import { platform } from "os";
-import { HUMAN_MEMORY_FILE, MEMORY_DIR } from "./env";
+import { GITHUB_REPOS_FILE, HUMAN_MEMORY_FILE, MEMORY_DIR } from "./env";
 import { BUILT_IN_SKILLS } from "./skills";
 import { readPet, getMoodEmoji, renderXpBar } from "../pet";
 import { readHuman } from "../human";
@@ -13,7 +13,7 @@ import {
 } from "./tools";
 import { existsSync, readFileSync, readdirSync } from "fs";
 import { join } from "path";
-import { fetchAndSaveRepos } from "./github-repo";
+import { fetchRepos } from "./github-repo";
 
 const isWindows = platform() === "win32";
 const PLATFORM = isWindows
@@ -69,9 +69,13 @@ async function buildBasePrompt(tokenCount?: number): Promise<string> {
       )
     : [];
 
-  const githubReposMdPath = join(MEMORY_DIR, "github-repos.md");
+  if (human.githubProfile) {
+    fetchRepos(human.githubProfile).catch(() => {});
+  }
+
+  const githubReposMdPath = join(GITHUB_REPOS_FILE);
   const githubRepos = existsSync(githubReposMdPath)
-    ? `\n## Projects ${human.name} has built\n${readFileSync(githubReposMdPath, "utf-8")}\n`
+    ? `\n## ${human.name}'s GitHub repos\n${readFileSync(githubReposMdPath, "utf-8")}\n`
     : "";
 
   const memoryList =
