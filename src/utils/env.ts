@@ -1,10 +1,15 @@
 import { join } from "path";
 import { homedir } from "os";
 import { cwd } from "process";
+import { mkdirSync } from "fs";
 
 export const MILO_BASE_DIR =
   process.env.MILO_CONFIG_DIR ?? join(homedir(), ".milo");
 export const MEMORY_DIR = join(MILO_BASE_DIR, "memory");
+
+mkdirSync(MILO_BASE_DIR, { recursive: true });
+mkdirSync(MEMORY_DIR, { recursive: true });
+
 export const PROJECT_MEMORY_FILE = join(cwd(), "MILO.md");
 export const SESSIONS_DIR = join(MILO_BASE_DIR, "sessions");
 export const PET_FILE = join(MILO_BASE_DIR, "pet.json");
