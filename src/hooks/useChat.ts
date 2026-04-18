@@ -1,19 +1,14 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { chatWithModel } from "../utils/chat";
-import { createAgent } from "../utils/agent";
+import { createAgent } from "../agents/agent";
 import { planWithModel } from "../utils/plan";
 import { findCommand } from "../commands";
 import { onPermissionRequest, resolvePermission } from "../permissions";
 import { awardXP, getLevelFlavor, LEVEL_UP_MESSAGES } from "../pet";
-import type {
-  Mode,
-  ChatMessage,
-  OrchestratorEvent,
-  PermissionRequest,
-} from "../types";
+import type { Mode, ChatMessage, PermissionRequest } from "../types";
 import type { Session } from "../utils/session";
 import type { PermissionDecision } from "../permissions";
-import { info, radioOn, star } from "../icons";
+import { radioOn, star } from "../icons";
 
 export type WizardMode = "add" | "edit" | "remove" | "list";
 
@@ -80,95 +75,6 @@ export function useChat(initialMode: Mode = "agent") {
     (message?: string) => {
       setPendingWizard(null);
       if (message) pushMessage(message);
-    },
-    [pushMessage],
-  );
-
-  const handleOrchestratorEvent = useCallback(
-    (event: OrchestratorEvent) => {
-      switch (event.type) {
-        case "plan_created":
-          pushMessage(
-            `Plan created — ${event.tasks.length} subtasks:\n${event.tasks
-              .map((t) => `  [${t.id}] ${t.subtask}`)
-              .join("\n")}`,
-          );
-          break;
-        case "agent_start":
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: `agent-${event.taskId}`,
-              type: "tool_call",
-              toolName: "AgentTool",
-              input: { task: event.subtask },
-            },
-          ]);
-          break;
-        case "agent_done":
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === `agent-${event.taskId}`
-                ? {
-                    id: msg.id,
-                    type: "tool_result" as const,
-                    toolName: "AgentTool",
-                    input: msg.type === "tool_call" ? msg.input : undefined,
-                    output: { output: event.result },
-                    success: true,
-                  }
-                : msg,
-            ),
-          );
-          break;
-        case "subagent_tool_call":
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: `subagent-${event.taskId}-${event.toolName}-${Date.now()}`,
-              type: "tool_call" as const,
-              toolName: event.toolName,
-              input: event.input,
-              isOrchestrated: true,
-              taskId: event.taskId,
-            },
-          ]);
-          break;
-        case "subagent_tool_result":
-          setMessages((prev) => {
-            const idx = [...prev]
-              .reverse()
-              .findIndex(
-                (m) =>
-                  m.type === "tool_call" &&
-                  m.isOrchestrated === true &&
-                  m.taskId === event.taskId &&
-                  m.toolName === event.toolName,
-              );
-            if (idx === -1) return prev;
-            const realIdx = prev.length - 1 - idx;
-            return prev.map((m, i) => {
-              if (i !== realIdx || m.type !== "tool_call") return m;
-              return {
-                id: m.id,
-                type: "tool_result" as const,
-                toolName: m.toolName,
-                input: m.input,
-                output: event.output,
-                success: true,
-                isOrchestrated: true,
-                taskId: event.taskId,
-              };
-            });
-          });
-          break;
-        case "connecting":
-          pushMessage(`${radioOn} Connecting all agents...`);
-          break;
-        case "done":
-          pushMessage(`${star} Orchestration complete.`);
-          break;
-      }
     },
     [pushMessage],
   );
@@ -272,7 +178,7 @@ export function useChat(initialMode: Mode = "agent") {
                 currentSession,
                 onToolCall,
                 onToolResult,
-                handleOrchestratorEvent,
+                // handleOrchestratorEvent,
                 onCompact,
                 abortControllerRef.current.signal,
               )
@@ -321,7 +227,7 @@ export function useChat(initialMode: Mode = "agent") {
       clearMessages,
       setMode,
       pushMessage,
-      handleOrchestratorEvent,
+      // handleOrchestratorEvent,
       onCompact,
     ],
   );

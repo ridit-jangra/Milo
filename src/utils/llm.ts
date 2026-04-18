@@ -12,24 +12,7 @@ import {
   estimateTokens,
   shouldCompact,
 } from "./compaction";
-
-function repairJSON(raw: string): string | null {
-  try {
-    JSON.parse(raw);
-    return raw;
-  } catch {
-    const repaired = raw
-      .replace(/\n/g, "\\n")
-      .replace(/\r/g, "\\r")
-      .replace(/\t/g, "\\t");
-    try {
-      JSON.parse(repaired);
-      return repaired;
-    } catch {
-      return null;
-    }
-  }
-}
+import { repairJSON } from "./json";
 
 export async function runLLM({
   system,

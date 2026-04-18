@@ -1,11 +1,8 @@
 import { randomUUID } from "crypto";
 import type { IncomingMessage, ServerResponse } from "http";
-import { createAgent } from "../utils/agent";
+import { createAgent } from "../agents/agent";
 import { chatWithModel } from "../utils/chat";
-import {
-  onPermissionRequest,
-  allowInSession,
-} from "../permissions";
+import { onPermissionRequest, allowInSession } from "../permissions";
 import { getDaemonSession, updateDaemonSession } from "./sessions";
 import { requestPermission as serverRequestPermission } from "./permissions";
 import type { Mode } from "../types";
@@ -73,8 +70,14 @@ export async function handleChat(
       args: input,
     });
 
-    const decision = await serverRequestPermission({ id: permId, toolName, input });
-    console.log(`[permission] resolved tool=${toolName} permId=${permId} decision=${decision}`);
+    const decision = await serverRequestPermission({
+      id: permId,
+      toolName,
+      input,
+    });
+    console.log(
+      `[permission] resolved tool=${toolName} permId=${permId} decision=${decision}`,
+    );
     if (decision === "allow_session") allowInSession(toolName);
     resolve(decision);
 

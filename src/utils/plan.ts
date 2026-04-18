@@ -1,6 +1,6 @@
 import { runLLM } from "./llm";
 import type {
-  OnOrchestratorEvent,
+  // OnOrchestratorEvent,
   StepToolCall,
   StepToolResult,
 } from "../types";
@@ -13,11 +13,11 @@ export async function planWithModel(
   session?: Session,
   onToolCall?: (t: StepToolCall) => void,
   onToolResult?: (t: StepToolResult) => void,
-  onOrchestratorEvent?: OnOrchestratorEvent,
+  // onOrchestratorEvent?: OnOrchestratorEvent,
   onCompact?: (s: Session) => void,
   abortSignal?: AbortSignal,
 ) {
-  const planTools = createPlanTools(onOrchestratorEvent);
+  const planTools = createPlanTools();
   return runLLM({
     system: await getPlanSystemPrompt(),
     prompt,

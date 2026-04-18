@@ -12,7 +12,7 @@ export const AgentTool = tool({
     prompt,
   }): Promise<{ success: boolean; result?: string; error?: string }> => {
     try {
-      const { createSubAgent } = await import("../../utils/agent.js");
+      const { createSubAgent } = await import("../../agents/agent.js");
       const result = (await createSubAgent(prompt)).text;
       return { success: true, result };
     } catch (err) {
