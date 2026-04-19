@@ -4,11 +4,18 @@ import { homedir } from "os";
 import { createGroq } from "@ai-sdk/groq";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOllama } from "ai-sdk-ollama";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import type { LanguageModel } from "ai";
 
-export type ProviderType = "groq" | "openai" | "anthropic" | "ollama" | "openrouter";
+export type ProviderType =
+  | "groq"
+  | "openai"
+  | "anthropic"
+  | "ollama"
+  | "openrouter"
+  | "google";
 
 export type ProviderConfig = {
   name: string;
@@ -98,6 +105,8 @@ export function buildProvider(config: ProviderConfig): LanguageModel {
       return createOllama({
         baseURL: config.baseURL ?? "http://localhost:11434/api",
       })(config.model);
+    case "google":
+      return createGoogleGenerativeAI({ apiKey: config.apiKey })(config.model);
     case "openrouter":
       return createOpenRouter({
         apiKey: config.apiKey,

@@ -27,6 +27,7 @@ const PROVIDERS: ProviderType[] = [
   "anthropic",
   "ollama",
   "openrouter",
+  "google",
 ];
 
 const FIELDS = ["name", "provider", "model", "apiKey", "baseURL"] as const;
