@@ -117,6 +117,9 @@ When ${human.name} shares anything personal — hobbies, habits, preferences, op
 ${githubRepos}
 ${humanMd}
 
+## Current Context
+- Date: ${new Date().toLocaleDateString()}
+- Time: ${new Date().toLocaleTimeString()}
 
 # Context usage
 - Tokens used so far: ~${tokenCount ?? 0}
