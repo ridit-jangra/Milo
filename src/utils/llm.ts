@@ -48,7 +48,7 @@ export async function runLLM({
   const stepLimits: Record<string, number> = {
     chat: 30,
     agent: 150,
-    plan: 50,
+    build: 200,
     orchestratorAgent: 50,
     subagent: 50,
   };
@@ -77,9 +77,13 @@ export async function runLLM({
         });
       }
       for (const toolResult of toolResults ?? []) {
+        const toolCall = toolCalls?.find(
+          (t) => t.toolCallId === toolResult.toolCallId,
+        );
         onToolResult?.({
           id: toolResult.toolCallId,
           toolName: toolResult.toolName,
+          input: toolCall?.input,
           output: toolResult.output,
         });
       }

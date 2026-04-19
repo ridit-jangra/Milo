@@ -19,7 +19,7 @@ function getModeColor(mode: Mode, stage: PetStage): string {
   switch (mode) {
     case "agent":
       return getTheme().secondary;
-    case "plan":
+    case "build":
       return getTheme().warning;
     case "chat":
       return getTheme().success;
@@ -46,7 +46,7 @@ export function StatusBar({
     return () => clearInterval(interval);
   }, []);
 
-  const icon = mode === "agent" ? diamond : mode === "plan" ? star : bullet;
+  const icon = mode === "agent" ? diamond : mode === "build" ? star : bullet;
 
   const modelPart = ` ${model} `;
   const modePart = ` ${icon} ${mode} mode `;

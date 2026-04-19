@@ -9,7 +9,7 @@ import { lineVertical } from "../icons";
 const TIPS = [
   "run /init to generate MILO.md",
   "use /mode chat for read-only",
-  "use /mode plan for big tasks",
+  "use /mode build for big tasks",
   "esc to interrupt at any time",
   "/help to see all commands",
   "ctrl+t to switch mode",

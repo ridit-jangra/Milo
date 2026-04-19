@@ -1,14 +1,12 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { chatWithModel } from "../utils/chat";
 import { createAgent } from "../agents/agent";
-import { planWithModel } from "../utils/plan";
 import { findCommand } from "../commands";
 import { onPermissionRequest, resolvePermission } from "../permissions";
 import { awardXP, getLevelFlavor, LEVEL_UP_MESSAGES } from "../pet";
 import type { Mode, ChatMessage, PermissionRequest } from "../types";
 import type { Session } from "../utils/session";
 import type { PermissionDecision } from "../permissions";
-import { radioOn, star } from "../icons";
 
 export type WizardMode = "add" | "edit" | "remove" | "list";
 
@@ -172,33 +170,23 @@ export function useChat(initialMode: Mode = "agent") {
         const currentSession = sessionRef.current;
 
         const result =
-          currentMode === "plan"
-            ? await planWithModel(
+          currentMode === "chat"
+            ? await chatWithModel(
                 input,
                 currentSession,
                 onToolCall,
                 onToolResult,
-                // handleOrchestratorEvent,
                 onCompact,
                 abortControllerRef.current.signal,
               )
-            : currentMode === "chat"
-              ? await chatWithModel(
-                  input,
-                  currentSession,
-                  onToolCall,
-                  onToolResult,
-                  onCompact,
-                  abortControllerRef.current.signal,
-                )
-              : await createAgent(
-                  input,
-                  currentSession,
-                  onToolCall,
-                  onToolResult,
-                  onCompact,
-                  abortControllerRef.current.signal,
-                );
+            : await createAgent(
+                input,
+                currentSession,
+                onToolCall,
+                onToolResult,
+                onCompact,
+                abortControllerRef.current.signal,
+              );
 
         setMessages((prev) => [
           ...prev,

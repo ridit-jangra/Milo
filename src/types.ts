@@ -2,7 +2,7 @@ import type { ToolSet } from "ai";
 import type { Session } from "./utils/session";
 import type { WizardMode } from "./hooks/useChat";
 
-export type Mode = "chat" | "agent" | "plan";
+export type Mode = "chat" | "agent" | "build";
 
 export type ChatMessage =
   | { id: string; type: "user"; text: string }
@@ -64,6 +64,7 @@ export type StepToolResult = {
   id: string;
   toolName: string;
   output: unknown;
+  input?: unknown;
 };
 
 export type LLMOptions = {
@@ -71,7 +72,7 @@ export type LLMOptions = {
   tools?: ToolSet;
   session?: Session;
   prompt: string;
-  mode?: "chat" | "agent" | "plan" | "subagent" | "orchestratorAgent";
+  mode?: "chat" | "agent" | "build" | "subagent" | "orchestratorAgent";
   onToolCall?: (toolCall: StepToolCall) => void;
   onToolResult?: (toolResult: StepToolResult) => void;
   abortSignal?: AbortSignal;

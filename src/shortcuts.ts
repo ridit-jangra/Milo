@@ -28,9 +28,9 @@ export function getShortcuts(): Shortcut[] {
 registerShortcut({
   key: "t",
   ctrl: true,
-  description: "cycle mode (agent → plan → chat)",
+  description: "cycle mode (agent → build → chat)",
   action: ({ mode, setMode }) => {
-    const cycle: Mode[] = ["agent", "plan", "chat"];
+    const cycle: Mode[] = ["agent", "build", "chat"];
     const next = cycle[(cycle.indexOf(mode) + 1) % cycle.length];
     if (next) setMode(next);
   },

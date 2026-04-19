@@ -1,10 +1,25 @@
 export function safeParseJSON(json: string | null | undefined): unknown {
-  if (!json) {
-    return null;
-  }
+  if (!json) return null;
+
+  // strip markdown fences
+  const cleaned = json.replace(/```json\n?|\n?```/g, "").trim();
+
   try {
-    return JSON.parse(json);
-  } catch (e) {
+    return JSON.parse(cleaned);
+  } catch {
+    try {
+      const repaired = repairJSON(cleaned);
+      if (repaired) return JSON.parse(repaired);
+    } catch {
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (match) {
+        try {
+          return JSON.parse(match[0]);
+        } catch {
+          return null;
+        }
+      }
+    }
     return null;
   }
 }

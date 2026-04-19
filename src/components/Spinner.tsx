@@ -9,7 +9,7 @@ import { readPet, getSpinnerPool } from "../pet";
 
 const TIPS = [
   "use agent mode for file tasks",
-  "use plan mode for large multi-step tasks",
+  "use build mode for large multi-step tasks",
   "esc to interrupt at any time",
   "milo remembers your preferences",
   "use RecallTool to search past sessions",

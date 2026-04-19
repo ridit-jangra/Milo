@@ -93,7 +93,3 @@ export function withCompact(
     CompactTool: createCompactTool(session, onCompact),
   };
 }
-
-export function createPlanTools() {
-  return {};
-}

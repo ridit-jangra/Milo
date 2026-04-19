@@ -1,76 +1,69 @@
-import type { StepToolCall, StepToolResult } from "../types";
-import { runLLM } from "../utils/llm";
-import { agentTools } from "../utils/tools";
-import { resolveTools } from "../utils/resolve";
-import { TalkTool } from "../tools/TalkTool/tool";
 import { getSwarmAgentSystemPrompt } from "../utils/systemPrompt";
-import type { Session } from "../utils/session";
-import { InboxTool } from "../tools/InboxTool/tool";
+import { type Session } from "../utils/session";
+import type { agentTools } from "../utils/tools";
+import { resolveTools } from "../utils/resolve";
+import { resolvePermission } from "../permissions";
+import { runLLM } from "../utils/llm";
+import { sharedMemory } from "./memory/sharedMemory";
+import { TalkTool } from "../tools/TalkTool/tool";
 
 export const agentsMap = new Map<string, CustomAgent>();
 
 export class CustomAgent {
-  public isBusy = false;
   private session?: Session;
 
   constructor(
     public name: string,
+    private personality?: string,
     private tools: (keyof typeof agentTools)[] = [
       "FileReadTool",
       "ThinkTool",
-      "MemoryReadTool",
       "GlobTool",
       "GrepTool",
       "ReadManyFilesTool",
+      "MemoryReadTool",
     ],
-    private additionalSystemPrompt?: string,
   ) {
     agentsMap.set(name, this);
   }
 
-  public async chat(
-    prompt: string,
-    onToolCall?: (t: StepToolCall) => void,
-    onToolResult?: (t: StepToolResult) => void,
-    abortSignal?: AbortSignal,
-  ) {
-    if (this.isBusy) return { text: "I'm currently busy." };
-    this.isBusy = true;
+  public async chat(prompt: string, abortSignal?: AbortSignal) {
+    const resolved = {
+      ...resolveTools(this.tools),
+      TalkTool,
+    };
 
-    try {
-      const resolved = { ...resolveTools(this.tools), TalkTool, InboxTool };
-
-      const response = await runLLM({
-        system: await getSwarmAgentSystemPrompt(this.name, [
-          ...agentsMap.keys(),
-        ]),
-        prompt: prompt,
-        mode: "agent",
-        tools: resolved,
-        onToolCall: (t) => {
+    const response = await runLLM({
+      system: `${await getSwarmAgentSystemPrompt(this.name, [
+        ...agentsMap.keys(),
+      ])}\n\n# Your personality\n${this.personality}\n\nAlready searched by other agents: ${JSON.stringify(sharedMemory.toolCalls)}`,
+      prompt: prompt,
+      mode: "agent",
+      tools: resolved,
+      onToolCall: (t) => {
+        if (t.toolName === "TalkTool") {
           console.log(
-            `[${this.name}] used ${t.toolName} with input: ${JSON.stringify(t.input)}`,
+            `\n💬 [${this.name}] → ${t.toolName === "TalkTool" ? `talking to ${(t.input as any).name}` : t.toolName}`,
           );
-        },
-        onToolResult: (t) => {
-          console.log(
-            `the [${t.toolName}] that [${this.name}] called returned output [${t.output}]`,
-          );
-        },
-        abortSignal,
-        session: this.session,
-        // messages: this.messages,
-      });
+          console.log(`   "${(t.input as any).message}"`);
+        } else {
+        }
+      },
+      onToolResult: (t) => {
+        if (t.toolName === "TalkTool") {
+          console.log(`💬 [${(t.input as any)?.name}] → ${this.name}`);
+          console.log(`   "${(t.output as any)?.response}"`);
+        }
+        sharedMemory.record(this.name, t.toolName, t.output, t.input);
+      },
+      abortSignal,
+      session: this.session,
+    });
 
-      this.session = response.session;
+    resolvePermission("allow_session");
 
-      console.log(`[${this.name}] to [user]: ${response.text}`);
+    this.session = response.session;
 
-      return response;
-    } catch (err) {
-      console.error(`[${this.name}] error:`, err);
-    } finally {
-      this.isBusy = false;
-    }
+    return response;
   }
 }
