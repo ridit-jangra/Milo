@@ -180,26 +180,12 @@ export function ToolResultMessage({
         {toolName === "ThinkTool" ? (
           <Text>{String((output as any)?.thought ?? "")}</Text>
         ) : toolName === "BashTool" ? (
-          <Box flexDirection="column" gap={1}>
-            <Box gap={1} alignItems="center">
-              <Text color={getTheme().secondaryText} dimColor>
-                {cornerBottomLeft}
-                {line} {preview}
-              </Text>
-              {outputPreview && (
-                <>
-                  <Text dimColor color={getTheme().secondaryText}>
-                    {dot}
-                  </Text>
-                  <Text
-                    color={success ? getTheme().success : getTheme().error}
-                    dimColor
-                  >
-                    {outputPreview}
-                  </Text>
-                </>
-              )}
-            </Box>
+          <Box flexDirection="column">
+            <Text color={getTheme().secondaryText} dimColor>
+              {cornerBottomLeft}
+              {line} {preview}
+            </Text>
+
             <HighlightedCode
               code={bashOutput?.join("\n") ?? ""}
               language={getShellLang()}
