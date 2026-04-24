@@ -34,7 +34,8 @@ const PLATFORM_NOTES = isWindows
 - Use Test-Path to check if a file exists: if (Test-Path "C:\\path\\to\\file") { "yes" }
 - Use New-Item -ItemType Directory -Force instead of mkdir -p
 - For background processes use: Start-Process <command>
-- && works in PowerShell 7+ — use ; as a safe fallback for chaining
+- NEVER use && on Windows PowerShell — it is not supported reliably
+- ALWAYS use ; to chain commands
 - Use $env:TEMP for temp directory, not %TEMP%
 - Paths with spaces MUST always be quoted — this is the most common source of errors
 - NEVER use cmd.exe syntax (if exist, start /b, findstr) — use PowerShell equivalents
@@ -70,7 +71,7 @@ Before executing the command, please follow these steps:
 
 Usage notes:
 ${PLATFORM_NOTES}
-- Use ; or && to chain multiple commands, never newlines
+- Use ; on windows and && on linux or mac to chain multiple commands, never newlines
 - Avoid cat, head, tail — use ${FileReadTool.title} to read files instead
 - To list files in a directory, use GlobTool with pattern "dirname/**/*" — never use dir or ls for this
 - Timeout defaults to 30 minutes, max 10 minutes per command
