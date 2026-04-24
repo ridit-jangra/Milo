@@ -93,24 +93,62 @@ export async function removeProvider(name: string): Promise<void> {
 export function buildProvider(config: ProviderConfig): LanguageModel {
   switch (config.provider) {
     case "groq":
-      return createGroq({ apiKey: config.apiKey })(config.model);
+      if (!config.apiKey) {
+        throw new Error('Groq API key missing. Use `/providers` to set credentials.');
+      }
+      try {
+        return createGroq({ apiKey: config.apiKey })(config.model);
+      } catch (error) {
+        throw new Error(`Groq connection failed: ${error.message}`);
+      }
     case "openai":
-      return createOpenAI({
-        apiKey: config.apiKey,
-        ...(config.baseURL ? { baseURL: config.baseURL } : {}),
-      })(config.model);
+      if (!config.apiKey) {
+        throw new Error('OpenAI API key missing. Use `/providers` to set credentials.');
+      }
+      try {
+        return createOpenAI({
+          apiKey: config.apiKey,
+          ...(config.baseURL ? { baseURL: config.baseURL } : {}),
+        })(config.model);
+      } catch (error) {
+        throw new Error(`OpenAI connection failed: ${error.message}`);
+      }
     case "anthropic":
-      return createAnthropic({ apiKey: config.apiKey })(config.model);
+      if (!config.apiKey) {
+        throw new Error('Anthropic API key missing. Use `/providers` to set credentials.');
+      }
+      try {
+        return createAnthropic({ apiKey: config.apiKey })(config.model);
+      } catch (error) {
+        throw new Error(`Anthropic connection failed: ${error.message}`);
+      }
     case "ollama":
-      return createOllama({
-        baseURL: config.baseURL ?? "http://localhost:11434/api",
-      })(config.model);
+      try {
+        return createOllama({
+          baseURL: config.baseURL ?? "http://localhost:11434/api",
+        })(config.model);
+      } catch (error) {
+        throw new Error(`Ollama connection failed: ${error.message}`);
+      }
     case "google":
-      return createGoogleGenerativeAI({ apiKey: config.apiKey })(config.model);
+      if (!config.apiKey) {
+        throw new Error('Google Gemini API key missing. Use `/providers` to set credentials.');
+      }
+      try {
+        return createGoogleGenerativeAI({ apiKey: config.apiKey })(config.model);
+      } catch (error) {
+        throw new Error(`Google Gemini connection failed: ${error.message}`);
+      }
     case "openrouter":
-      return createOpenRouter({
-        apiKey: config.apiKey,
-        ...(config.baseURL ? { baseURL: config.baseURL } : {}),
-      })(config.model);
-  }
+      if (!config.apiKey) {
+        throw new Error('OpenRouter API key missing. Use `/providers` to set credentials.');
+      }
+      try {
+        return createOpenRouter({
+          apiKey: config.apiKey,
+          ...(config.baseURL ? { baseURL: config.baseURL } : {}),
+        })(config.model);
+      } catch (error) {
+        throw new Error(`OpenRouter connection failed: ${error.message}`);
+      });
 }
