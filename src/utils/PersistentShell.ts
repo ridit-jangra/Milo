@@ -51,7 +51,7 @@ export class PersistentShell {
   constructor(cwd: string) {
     this.binShell =
       process.env.SHELL ||
-      (process.platform === "win32" ? "cmd.exe" : "/bin/bash");
+      (process.platform === "win32" ? "powershell.exe" : "/bin/bash");
 
     this.shell = spawn(
       process.platform === "win32" ? "cmd.exe" : this.binShell,
@@ -256,11 +256,15 @@ export class PersistentShell {
       let stdout = "";
       let stderr = "";
 
-      const child = spawn("cmd.exe", ["/c", command], {
-        cwd: this.cwd,
-        env: process.env,
-        stdio: ["ignore", "pipe", "pipe"],
-      });
+      const child = spawn(
+        "powershell.exe",
+        ["-NoProfile", "-Command", command],
+        {
+          cwd: this.cwd,
+          env: process.env,
+          stdio: ["ignore", "pipe", "pipe"],
+        },
+      );
 
       this.activeChild = child;
 

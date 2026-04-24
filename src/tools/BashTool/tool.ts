@@ -7,7 +7,6 @@ import {
   BANNED_COMMANDS,
 } from "./prompt.js";
 import { PersistentShell } from "../../utils/PersistentShell.js";
-import { writeFileSync } from "fs";
 import { requestPermission } from "../../permissions.js";
 
 const inputSchema = z.object({
@@ -18,7 +17,7 @@ const inputSchema = z.object({
     .describe("Timeout in milliseconds, max 600000"),
 });
 
-export const BashTool = {
+export const BashTool = tool({
   description: DESCRIPTION + "\n\n" + PROMPT,
   title: "Bash",
   inputSchema,
@@ -41,31 +40,7 @@ export const BashTool = {
 
       const shell = PersistentShell.getInstance();
 
-      const sanitized =
-        process.platform === "win32" ? command.replace(/\^"/g, '"') : command;
-
-      let finalCommand = sanitized;
-
-      if (process.platform === "win32") {
-        const commitMatch = sanitized.match(/^git\s+commit\s+-m\s+(.+)$/i);
-        if (commitMatch) {
-          let msg = commitMatch[1]!.trim();
-          if (
-            (msg.startsWith('"') && msg.endsWith('"')) ||
-            (msg.startsWith("'") && msg.endsWith("'"))
-          ) {
-            msg = msg.slice(1, -1);
-          }
-          const tempPath = `${process.env.TEMP}\\milo_commit_msg.txt`;
-          writeFileSync(tempPath, msg);
-          finalCommand = sanitized.replace(
-            /^git\s+commit\s+-m\s+.+$/i,
-            `git commit -F '${tempPath}'`,
-          );
-        }
-      }
-
-      const output = await shell.execute(finalCommand, timeout);
+      const output = await shell.execute(command, timeout);
 
       const truncated = output.length > MAX_OUTPUT_LENGTH;
       return {
@@ -79,4 +54,4 @@ export const BashTool = {
       return { success: false, error: String(err) };
     }
   },
-};
+});

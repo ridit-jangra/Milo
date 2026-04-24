@@ -6,6 +6,8 @@ import { getTheme } from "../../utils/theme";
 import { useTerminalSize } from "../../hooks/useTerminalSize";
 import { StructuredDiff } from "../StructuredDiff";
 import { star, cornerBottomLeft, line, dot } from "../../icons";
+import { applyMarkdown } from "../../utils/markdown";
+import { HighlightedCode } from "../HighlightedCode";
 
 type Props = {
   toolName: string;
@@ -21,8 +23,6 @@ function getAction(toolName: string, input: unknown): string {
   switch (toolName) {
     case "FileReadTool":
       return `cat ${a.path ?? ""}`;
-    case "ReadManyFilesTool":
-      return `cat ${(a.files as any[])?.map((f: any) => f.path.split(/[\\/]/).at(-1)).join(", ") ?? ""}`;
     case "FileWriteTool":
       return `write ${a.path ?? ""}`;
     case "FileEditTool":
@@ -65,11 +65,6 @@ function getOutputPreview(toolName: string, output: unknown): string | null {
       const first = out.split("\n")[0] ?? "";
       return first.length > 60 ? first.slice(0, 60) + "…" : first || null;
     }
-    case "ReadManyFilesTool": {
-      const results = (o.results as any[]) ?? [];
-      const ok = results.filter((r) => r.success).length;
-      return `${ok}/${results.length} files`;
-    }
     case "FileReadTool": {
       const lines = String(o.content ?? "")
         .trim()
@@ -111,6 +106,13 @@ function getOutputPreview(toolName: string, output: unknown): string | null {
     default:
       return null;
   }
+}
+
+function getShellLang(): string {
+  if (process.platform === "win32") {
+    return "powershell";
+  }
+  return "bash";
 }
 
 function getDiff(
@@ -157,6 +159,13 @@ export function ToolResultMessage({
   const outputPreview = getOutputPreview(toolName, output);
   const hunk = getDiff(toolName, output);
 
+  const bashOutput =
+    toolName === "BashTool"
+      ? String((output as any)?.output ?? "")
+          .split("\n")
+          .slice(0, 10)
+      : null;
+
   return (
     <Box flexDirection="column" marginTop={addMargin ? 1 : 0}>
       <Box flexDirection="row" gap={1}>
@@ -170,6 +179,11 @@ export function ToolResultMessage({
       <Box flexDirection="column" marginLeft={2}>
         {toolName === "ThinkTool" ? (
           <Text>{String((output as any)?.thought ?? "")}</Text>
+        ) : toolName === "BashTool" ? (
+          <HighlightedCode
+            code={bashOutput?.join("\n") ?? ""}
+            language={getShellLang()}
+          />
         ) : (
           <Box gap={1} alignItems="center">
             <Text color={getTheme().secondaryText} dimColor>

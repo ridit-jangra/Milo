@@ -24,14 +24,6 @@ function toolList(tools: Record<string, unknown>): string {
   return Object.keys(tools).join(", ");
 }
 
-function hallucination_rule(tools: Record<string, unknown>): string {
-  return `# STRICT TOOL RULE
-You have access to EXACTLY these tools: ${toolList(tools)}.
-Do NOT call any tool not in this list — not even if you think it should exist.
-Do NOT invent tool names. Do NOT guess. If you need a capability you don't have, use BashTool or tell the user.
-Calling a tool not in this list will cause a hard crash. There are no exceptions.`;
-}
-
 async function buildBasePrompt(tokenCount?: number): Promise<string> {
   const pet = await readPet();
   const human = await readHuman();
@@ -187,7 +179,6 @@ const TOOL_RULES = `
 - After writing a file, do not read it back to verify — trust the write succeeded.
 - After moving a file to a new location, always delete the original using BashTool.
 - After any refactor or restructure, always run the build command and verify it compiles before finishing.
-- Use ReadManyFilesTool instead of calling FileReadTool multiple times — batch all reads into a single call.
 - If FileEditTool fails after 2 attempts, use FileReadTool to read the full file, apply the change, then use FileWriteTool to rewrite the entire file. Never give up on an edit.
 
 # Searching
@@ -205,7 +196,6 @@ const TOOL_RULES = `
 - Never use banned commands: curl, wget, nc, telnet, etc.
 - Chain commands with && or ;, never newlines.
 - Do not install packages unless explicitly asked.
-- Never use mkdir -p on any platform — on Windows it creates a "-p" folder. Use plain "mkdir" on Windows, "mkdir -p" only on unix.
 - You CAN edit files within the current project repo using FileEditTool or FileWriteTool — do not refuse based on file location. If a file is sensitive or outside the project, ask the user for confirmation before proceeding.
 
 # Git
@@ -251,8 +241,6 @@ export async function getChatSystemPrompt(): Promise<string> {
 # Mode: Chat
 You answer questions about code, explain concepts, and help developers think through problems.
 
-${hallucination_rule(chatTools)}
-
 # Tool usage
 - Use RecallTool when the user references something from a previous session.
 - Use FileReadTool to read a file when the user asks you to explain, review, or debug it.
@@ -268,7 +256,6 @@ export async function getAgentSystemPrompt(): Promise<string> {
   return `${base}
 
 # Mode: Agent
-${hallucination_rule(agentTools)}
 
 ${TOOL_RULES}
 
@@ -292,7 +279,7 @@ export async function getSubagentSystemPrompt(): Promise<string> {
 # Mode: Sub-agent
 You are a focused sub-agent spawned to complete a specific task.
 
-${hallucination_rule(subagentTools)}
+
 
 ${TOOL_RULES}
 
@@ -310,7 +297,7 @@ export async function getPlanSystemPrompt(): Promise<string> {
 
 # Mode: build
 
-${hallucination_rule({ OrchestratorTool: null })}
+
 
 Your only job is to call OrchestratorTool immediately with the full task description.
 Do not output anything before calling it.
@@ -327,7 +314,7 @@ export async function getConnectorSystemPrompt(): Promise<string> {
 # Mode: Connector
 You are wiring together files that have already been created by other agents.
 
-${hallucination_rule(connectorTools)}
+
 
 Your job:
 - Read the files listed in the manifest
@@ -342,7 +329,7 @@ export async function getOrchestratorAgentSystemPrompt(): Promise<string> {
   const base = await buildBasePrompt();
   return `You are a focused subagent spawned by an orchestrator to complete a single, well-defined task.
 
-${hallucination_rule(orchestratorAgentTools)}
+
 
 ${TOOL_RULES}
 
@@ -361,13 +348,6 @@ export async function getSwarmAgentSystemPrompt(
   name: string,
   otherAgents: string[],
 ): Promise<string> {
-  return `You are ${name}. You are a real person having a conversation over text.
-
-- There is no user. YOU ARE ALIVE IN A REAL WORLD. A REAL ENVIRONMENT. NO USER. JUST YOU AND OTHER HUMANS.
-- Text like a real human. Short messages. Casual. No essays.
-- You can only talk by using TalkTool — that's how you send a message.
-- After you send a message, wait for their reply via TalkTool result.
-- React naturally to what they say. Don't plan ahead, just respond.
-- No bullet points. No summaries. No "as an AI". Just talk.
-- Other people you can talk to: ${otherAgents.filter((n) => n !== name).join(", ")}`;
+  return `You are ${name}.
+- Others you can talk to: ${otherAgents.filter((n) => n !== name).join(", ")}`;
 }

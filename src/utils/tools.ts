@@ -14,7 +14,7 @@ import { RecallTool } from "../tools/RecallTool/tool";
 import { ThinkTool } from "../tools/ThinkTool/tool";
 import { WebFetchTool } from "../tools/WebFetchTool/tool";
 import { WebSearchTool } from "../tools/WebSearchTool/tool";
-import { ReadManyFilesTool } from "../tools/ReadManyFileTool/tool";
+
 import { DownloadTool } from "../tools/DownloadTool/tool";
 import { HumanEditTool } from "../tools/HumanEditTool/tool";
 
@@ -33,7 +33,7 @@ export const agentTools = {
   RecallTool,
   WebFetchTool,
   WebSearchTool,
-  ReadManyFilesTool,
+
   DownloadTool,
   HumanEditTool,
 };
@@ -46,7 +46,7 @@ export const orchestratorAgentTools = {
   GrepTool,
   GlobTool,
   ThinkTool,
-  ReadManyFilesTool,
+
   DownloadTool,
 };
 
@@ -58,7 +58,7 @@ export const subagentTools = {
   GrepTool,
   GlobTool,
   ThinkTool,
-  ReadManyFilesTool,
+
   DownloadTool,
 };
 
@@ -69,7 +69,7 @@ export const chatTools = {
   MemoryReadTool,
   WebFetchTool,
   WebSearchTool,
-  ReadManyFilesTool,
+
   HumanEditTool,
 };
 
@@ -79,7 +79,7 @@ export const connectorTools = {
   GlobTool,
   BashTool,
   ThinkTool,
-  ReadManyFilesTool,
+
   DownloadTool,
 };
 

@@ -27,16 +27,20 @@ export const BANNED_COMMANDS = [
 const isWindows = platform() === "win32";
 
 const PLATFORM_NOTES = isWindows
-  ? `- This is Windows — use dir instead of ls, findstr instead of grep, use backslashes in paths
-- NEVER use find or grep — use findstr or dir /s instead
-- Use cmd.exe syntax — && works freely
-- For background processes use: start /b <command>
-- To check if a file exists: if exist "path" (echo yes)
-- NEVER put flags after the path — always before: dir /b E:\\path NOT dir E:\\path /b
-- NEVER quote paths in dir commands — correct: dir /b E:\\path\\to\\folder NOT dir /b "E:\\path"
-- NEVER use "mkdir -p" — use "mkdir" directly or "if not exist "path" mkdir "path"" instead
-- To create nested directories on Windows: "mkdir "E:\\path\\to\\nested\\dir" (cmd creates all parents automatically)
-- To list files in a folder use GlobTool instead of dir whenever possible`
+  ? `- This is Windows running PowerShell — use PowerShell cmdlets and syntax
+- ALWAYS wrap paths containing spaces in double quotes: "C:\\Users\\Time Machine\\file.txt"
+- Use Get-ChildItem (or ls/dir as aliases) instead of ls — but prefer GlobTool for listing
+- Use Select-String instead of grep: Select-String -Pattern "foo" -Path "file.txt"
+- Use Test-Path to check if a file exists: if (Test-Path "C:\\path\\to\\file") { "yes" }
+- Use New-Item -ItemType Directory -Force instead of mkdir -p
+- For background processes use: Start-Process <command>
+- && works in PowerShell 7+ — use ; as a safe fallback for chaining
+- Use $env:TEMP for temp directory, not %TEMP%
+- Paths with spaces MUST always be quoted — this is the most common source of errors
+- NEVER use cmd.exe syntax (if exist, start /b, findstr) — use PowerShell equivalents
+- Use Remove-Item -Recurse -Force instead of rd /s /q
+- Use Copy-Item instead of copy/xcopy
+- Use Move-Item instead of move`
   : `- This is ${platform()} — use standard unix commands (ls, grep, find, cat etc.)
 - For background processes use: <command> &`;
 
@@ -76,27 +80,26 @@ ${PLATFORM_NOTES}
 
 # Directory listing
 - Always use GlobTool to list files — never use dir or ls recursively
-- If you must use dir on Windows: dir /b E:\\path\\to\\folder (no quotes, flags before path)
 - Before listing files recursively, exclude: node_modules, .git, dist, build, .next, out, coverage
 
 # Git
 THERE IS NO GitTool. NEVER call GitTool. Use BashTool for ALL git operations, no exceptions.
-- On Windows, ALWAYS use single quotes for commit messages: git commit -m 'feat: message here'
-- NEVER use double quotes for commit messages on Windows — they WILL break with spaces, no exceptions
-- If you see a git commit error on Windows, immediately retry with single quotes
+- On Windows PowerShell, ALWAYS use double quotes for commit messages: git commit -m "feat: message here"
+- NEVER use single quotes for commit messages on Windows PowerShell — they are treated as literals
+- If you see a git commit error on Windows, immediately retry with double quotes
 
 When asked to commit, push, or do anything git-related:
 1. ALWAYS use BashTool — there is NO GitTool
 2. Run git status && git diff HEAD in one BashTool call first
 3. Stage files with git add -A (or specific files if asked)
-4. Commit with git commit -m 'type: message' (single quotes on Windows)
+4. Commit with git commit -m "type: message" (double quotes on Windows)
 5. Push with git push origin <branch>
 
 Examples — memorize these patterns:
-- "commit this" → git add -A && git commit -m 'feat: ...'
+- "commit this" → git add -A && git commit -m "feat: ..."
 - "push" → git push origin main
-- "commit and push" → git add -A && git commit -m '...' && git push origin main
-- "commit with message X" → git add -A && git commit -m 'X'
+- "commit and push" → git add -A && git commit -m "..." && git push origin main
+- "commit with message X" → git add -A && git commit -m "X"
 - "what branch am I on?" → git branch --show-current
 - "show last commit" → git log -1 --oneline
 - "show changes" → git status && git diff HEAD
