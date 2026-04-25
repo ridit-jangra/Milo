@@ -10,3 +10,6 @@ tests/
 *.md
 test.http
 tsconfig.json
+.prettierignore
+.prettierrc
+eslint.config.js

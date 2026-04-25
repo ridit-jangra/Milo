@@ -15,6 +15,7 @@ export type ProviderType =
   | "anthropic"
   | "ollama"
   | "openrouter"
+  | "hackclub"
   | "google";
 
 export type ProviderConfig = {
@@ -180,6 +181,24 @@ export function buildProvider(config: ProviderConfig): LanguageModel {
         return createOpenRouter({
           apiKey: config.apiKey,
           ...(config.baseURL ? { baseURL: config.baseURL } : {}),
+        })(config.model);
+      } catch (error) {
+        throw new Error(
+          `OpenRouter connection failed: ${(error as unknown as { message: string }).message}`,
+          { cause: error },
+        );
+      }
+    case "hackclub":
+      if (!config.apiKey) {
+        throw new Error(
+          "OpenRouter API key missing. Use `/providers` to set credentials.",
+          { cause: "No apikey found" },
+        );
+      }
+      try {
+        return createOpenRouter({
+          apiKey: config.apiKey,
+          baseURL: "https://ai.hackclub.com/proxy/v1/chat/completions",
         })(config.model);
       } catch (error) {
         throw new Error(

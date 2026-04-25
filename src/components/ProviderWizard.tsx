@@ -26,6 +26,7 @@ const PROVIDERS: ProviderType[] = [
   "anthropic",
   "ollama",
   "openrouter",
+  "hackclub",
   "google",
 ];
 
