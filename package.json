@@ -6,11 +6,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ridit-jangra/Milo"
+    "url": "git+https://github.com/ridit-jangra/Milo.git"
   },
   "main": "dist/index.mjs",
   "bin": {
-    "milo": "./dist/index.mjs"
+    "milo": "dist/index.mjs"
   },
   "scripts": {
     "dev": "bun src/index.tsx",
