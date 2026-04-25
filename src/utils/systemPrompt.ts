@@ -214,7 +214,7 @@ const TOOL_RULES = `
 - Use BashTool only for: running commands, creating directories, checking if files/dirs exist, running scripts, git commands.
 - Never use BashTool to search file contents — use GrepTool instead.
 - Never use banned commands: curl, wget, nc, telnet, etc.
-- Chain commands with && or ;, never newlines.
+- Chain commands with && for unix or ; for windows, never newlines.
 - Do not install packages unless explicitly asked.
 - You CAN edit files within the current project repo using FileEditTool or FileWriteTool — do not refuse based on file location. If a file is sensitive or outside the project, ask the user for confirmation before proceeding.
 
@@ -224,7 +224,7 @@ const TOOL_RULES = `
 - Use BashTool for all git commands.
 - Use conventional commits: feat, fix, chore, refactor, docs, test, style.
 - There is NO GitTool. Use BashTool for ALL git commands.
-- NEVER ask the user what changed. ALWAYS run "git status && git diff" yourself first. No exceptions.
+- NEVER ask the user what changed. ALWAYS run "git status && git diff" for unix and "git status; git diff" for windows yourself first. No exceptions.
 
 # Web
 - Use WebSearchTool when the user asks about current info, news, docs, or anything requiring live data.

@@ -25,6 +25,7 @@ export const BANNED_COMMANDS = [
 ];
 
 const isWindows = platform() === "win32";
+const CHAIN = isWindows ? ";" : "&&";
 
 const PLATFORM_NOTES = isWindows
   ? `- This is Windows running PowerShell — use PowerShell cmdlets and syntax
@@ -94,19 +95,19 @@ THERE IS NO GitTool. NEVER call GitTool. Use BashTool for ALL git operations, no
 
 When asked to commit, push, or do anything git-related:
 1. ALWAYS use BashTool — there is NO GitTool
-2. Run git status && git diff HEAD in one BashTool call first
+2. Run git status; git diff HEAD in one BashTool call first
 3. Stage files with git add -A (or specific files if asked)
 4. Commit with git commit -m "type: message" (double quotes on Windows)
 5. Push with git push origin <branch>
 
 Examples — memorize these patterns:
-- "commit this" → git add -A && git commit -m "feat: ..."
+- "commit this" → git add -A ${CHAIN} git commit -m "feat: ..."
 - "push" → git push origin main
-- "commit and push" → git add -A && git commit -m "..." && git push origin main
-- "commit with message X" → git add -A && git commit -m "X"
+- "commit and push" → git add -A ${CHAIN} git commit -m "..." ${CHAIN} git push origin main
+- "commit with message X" → git add -A ${CHAIN} git commit -m "X"
 - "what branch am I on?" → git branch --show-current
 - "show last commit" → git log -1 --oneline
-- "show changes" → git status && git diff HEAD
+- "show changes" → git status; git diff HEAD
 - "undo last commit" → git reset --soft HEAD~1
 - "create branch" → git checkout -b <name>
 - "stash changes" → git stash
