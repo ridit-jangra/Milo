@@ -2,7 +2,7 @@
 
 A tiny cat that lives in your terminal.
 
-You talk to it. It writes code, reads files, runs commands, searches the web, and remembers things across sessions. It also gains XP, levels up, and gets sad if you don't feed it.
+You talk to it. It writes code, reads files, runs commands, searches the web, and remembers who you are. It also gains XP, levels up, and gets sad if you don't feed it.
 
 ![Preview!!](./preview/image.png)
 
@@ -34,15 +34,13 @@ On first launch, Milo will walk you through a quick setup to introduce yourself 
 
 ## What it does
 
-Milo runs as an interactive CLI with three modes:
+Milo runs as an interactive CLI with two modes:
 
 **Agent** — full access. reads files, writes code, runs commands, fixes bugs. this is the default.
 
 **Chat** — read-only. answers questions, explains code, searches the web. no changes to your files.
 
-**Plan** — spawns multiple parallel agents to tackle large tasks. good for "build me an auth system" type prompts.
-
-Switch modes with `ctrl+t` or `/mode agent | chat | plan`.
+Switch modes with `ctrl+t` or `/mode agent | chat`.
 
 ---
 
@@ -72,6 +70,7 @@ Milo supports multiple AI providers:
 - **OpenAI** — gpt-4o and friends
 - **Anthropic** — claude
 - **Ollama** — local models, no API key needed
+  and many more!
 
 Add a provider:
 
@@ -123,12 +122,35 @@ Milo remembers things across sessions. global preferences live at `~/.milo/memor
 
 ---
 
+## Human
+
+Milo remembers how you are, your name, your gender and everything you tell it. After Milo gets a good context about you then its truly yours.
+
+---
+
 ## Built with
 
 - [Vercel AI SDK](https://sdk.vercel.ai) — model routing and tool calling
 - [Ink](https://github.com/vadimdemedes/ink) — React for CLIs
 
+[Ink](https://github.com/vadimdemedes/ink) is used for making CLIs using React.
+More about it: [Github Repo](https://github.com/vadimdemedes/ink)
+
+[Vercel AI SDK](https://sdk.vercel.ai) is used for making chatbots and agents with tools calls and everything else baked into it.
+More about it: [Website](https://ai-sdk.dev/)
+
 ---
+
+## History
+
+Milo evloved from [Lens](https://github.com/ridit-jangra/Lens) which was an AI Agent to explore a codebase, but the name Lens was just stuck to finding things or knowing things which I didn't like and the tool calling was broken and many things was bad. Then claude code's source code got leaked and I read the codebase and got a motivation to create something like this. Then Milo was created, its not just an AI agent daing your stuff its your pet / buddy / friend / partner / best-friend that knows you, talks to you and is really bonded with you, so you don't feel alone while coding or doing other stuff at 3 AM.
+
+Its all i got to say.
+Try it for yourself and you won't go back.
+
+---
+
+# For Devs
 
 ## Daemon mode
 
@@ -155,3 +177,5 @@ POST   /sessions/:id/permissions/:permId resolve a permission request
 ## License
 
 MIT
+
+Made by Ridit with 💕 for you.
