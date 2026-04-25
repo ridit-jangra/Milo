@@ -2,13 +2,14 @@ import React, { useState, useEffect, type JSX } from "react";
 import { Box, Text, Static, useInput } from "ink";
 import { getHistory, addToHistory } from "../history";
 import TextInput from "../components/TextInput";
-import { Spinner } from "../components/Spinner";
+import { SimpleSpinner, Spinner } from "../components/Spinner";
 import InkSpinner from "ink-spinner";
 import { useTerminalSize } from "../hooks/useTerminalSize";
 import { useChat } from "../hooks/useChat";
 import { getTheme } from "../utils/theme";
 import { Message } from "../components/Message";
-import { pointer, line } from "../icons";
+import { pointer, line, cornerBottomLeft } from "../icons";
+import { shellStream } from "../utils/shellStream";
 import { Header } from "../components/Header";
 import { ProviderWizard } from "../components/ProviderWizard";
 import {
@@ -22,6 +23,10 @@ import { PermissionCard } from "../components/permissions/PermissionCard";
 import { readPetSync } from "../pet";
 import { isBootstrap, markBootstrapDone } from "../utils/bootstrap";
 import { BootstrapWizard } from "../components/BootstrapWizard";
+import { HighlightedCode } from "../components/HighlightedCode";
+import { PersistentShell } from "../utils/PersistentShell";
+
+const MAX_RENDERED_LINES = 20;
 
 type SubtoolMessage = Extract<
   ChatMessage,
@@ -49,8 +54,12 @@ export default function REPL(): JSX.Element {
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [lastTypedInput, setLastTypedInput] = useState("");
+  const [commandStartTime, setCommandStartTime] = useState<number>(0);
+  const [elapsed, setElapsed] = useState<number>(0);
   const [modelLabel, setModelLabel] = useState("no model");
   const [bootstrap, setBootstrap] = useState(isBootstrap());
+  const [liveOutput, setLiveOutput] = useState<string>("");
+  const [liveCommand, setLiveCommand] = useState<string>("");
   const [petLevel] = useState(INITIAL_PET_LEVEL);
 
   const {
@@ -70,6 +79,9 @@ export default function REPL(): JSX.Element {
   useInput((_, key) => {
     if (key.escape) {
       abort();
+      setLiveOutput("");
+      setLiveCommand("");
+      setElapsed(0);
     }
   });
 
@@ -80,8 +92,46 @@ export default function REPL(): JSX.Element {
       .catch(() => {});
   }, [pendingWizard]);
 
+  useEffect(() => {
+    const onCommand = (cmd: string) => {
+      setLiveCommand(cmd);
+      setCommandStartTime(Date.now());
+      setElapsed(0);
+    };
+    const onChunk = (chunk: string) => {
+      setLiveOutput((prev) => {
+        const next = prev + chunk;
+        const lines = next.split("\n");
+        return lines.slice(-MAX_RENDERED_LINES).join("\n");
+      });
+    };
+    const onDone = () => {
+      setLiveOutput("");
+      setLiveCommand("");
+      setElapsed(0);
+    };
+
+    shellStream.on("command", onCommand);
+    shellStream.on("chunk", onChunk);
+    shellStream.on("done", onDone);
+    return () => {
+      shellStream.off("command", onCommand);
+      shellStream.off("chunk", onChunk);
+      shellStream.off("done", onDone);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!liveCommand) return;
+    const interval = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - commandStartTime) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [liveCommand, commandStartTime]);
+
   function onSubmit(input: string) {
     if (!input.trim() || loading) return;
+    PersistentShell.getInstance().resetAbort();
     addToHistory(input.trim()).catch(() => {});
     setHistory((prev) =>
       prev[0] === input.trim() ? prev : [input.trim(), ...prev].slice(0, 100),
@@ -293,6 +343,38 @@ export default function REPL(): JSX.Element {
               </Box>
             );
           })}
+        </Box>
+      )}
+
+      {liveOutput.length > 0 && (
+        <Box flexDirection="column">
+          <Box flexDirection="row">
+            <Box minWidth={2} width={2}>
+              <SimpleSpinner />
+            </Box>
+            <Text color={getTheme().secondaryText}>Running BashTool…</Text>
+          </Box>
+          <Box marginLeft={2} flexDirection="column">
+            <Box flexDirection="row">
+              <Text color={getTheme().secondaryText} dimColor>
+                {cornerBottomLeft}
+                {line}{" "}
+              </Text>
+              <Text color={getTheme().secondary}>
+                $ {liveCommand}
+                {elapsed > 0 ? (
+                  <Text color={getTheme().secondaryText} dimColor>
+                    {" "}
+                    · {elapsed}s
+                  </Text>
+                ) : null}
+              </Text>
+            </Box>
+            <HighlightedCode
+              code={liveOutput}
+              language={process.platform === "win32" ? "powershell" : "bash"}
+            />
+          </Box>
         </Box>
       )}
 

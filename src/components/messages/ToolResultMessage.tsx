@@ -188,7 +188,7 @@ export function ToolResultMessage({
           <Box flexDirection="column">
             <Text color={getTheme().secondaryText} dimColor>
               {cornerBottomLeft}
-              {line} {preview}
+              {line} $ {preview}
             </Text>
 
             <HighlightedCode

@@ -4,6 +4,7 @@ import { existsSync } from "fs";
 import { spawn, type ChildProcess } from "child_process";
 import { isAbsolute, resolve, join } from "path";
 import * as os from "os";
+import { shellStream } from "./shellStream";
 
 type ExecResult = {
   stdout: string;
@@ -16,6 +17,7 @@ type QueuedCommand = {
   command: string;
   abortSignal?: AbortSignal;
   timeout?: number;
+  onChunk?: (chunk: string) => void;
   resolve: (result: ExecResult) => void;
   reject: (error: Error) => void;
 };
@@ -40,6 +42,7 @@ export class PersistentShell {
   private shell: ChildProcess;
   private isAlive = true;
   private commandInterrupted = false;
+  private sessionAborted = false;
   private statusFile: string;
   private stdoutFile: string;
   private stderrFile: string;
@@ -119,6 +122,11 @@ export class PersistentShell {
     }
   }
 
+  resetAbort() {
+    this.sessionAborted = false;
+    this.commandInterrupted = false;
+  }
+
   killChildren() {
     if (process.platform === "win32") {
       if (this.activeChild?.pid) {
@@ -144,17 +152,19 @@ export class PersistentShell {
       } catch {}
     }
     this.commandInterrupted = true;
+    this.sessionAborted = true;
+    shellStream.emit("done");
   }
 
   private async processQueue() {
     if (this.isExecuting || this.commandQueue.length === 0) return;
     this.isExecuting = true;
-    const { command, abortSignal, timeout, resolve, reject } =
+    const { command, abortSignal, timeout, onChunk, resolve, reject } =
       this.commandQueue.shift()!;
     const killChildren = () => this.killChildren();
     if (abortSignal) abortSignal.addEventListener("abort", killChildren);
     try {
-      resolve(await this.exec_(command, timeout));
+      resolve(await this.exec_(command, timeout, onChunk, abortSignal));
     } catch (error) {
       reject(error as Error);
     } finally {
@@ -168,12 +178,14 @@ export class PersistentShell {
     command: string,
     abortSignal?: AbortSignal,
     timeout?: number,
+    onChunk?: (chunk: string) => void,
   ): Promise<ExecResult> {
     return new Promise((resolve, reject) => {
       this.commandQueue.push({
         command,
         abortSignal,
         timeout,
+        onChunk,
         resolve,
         reject,
       });
@@ -181,18 +193,36 @@ export class PersistentShell {
     });
   }
 
-  async execute(command: string, timeout?: number): Promise<string> {
-    const result = await this.exec(command, undefined, timeout);
+  async execute(
+    command: string,
+    timeout?: number,
+    onChunk?: (chunk: string) => void,
+  ): Promise<string> {
+    const result = await this.exec(command, undefined, timeout, onChunk);
     const combined = [result.stdout, result.stderr].filter(Boolean).join("\n");
     return combined;
   }
 
-  private async exec_(command: string, timeout?: number): Promise<ExecResult> {
+  private async exec_(
+    command: string,
+    timeout?: number,
+    onChunk?: (chunk: string) => void,
+    abortSignal?: AbortSignal,
+  ): Promise<ExecResult> {
+    if (this.sessionAborted) {
+      return {
+        stdout: "",
+        stderr: "Interrupted",
+        code: SIGTERM_CODE,
+        interrupted: true,
+      };
+    }
+
     const commandTimeout = timeout || DEFAULT_TIMEOUT;
     this.commandInterrupted = false;
 
     if (process.platform === "win32") {
-      return this.execWindows(command, commandTimeout);
+      return this.execWindows(command, commandTimeout, onChunk, abortSignal);
     }
 
     return new Promise<ExecResult>((resolve) => {
@@ -209,6 +239,22 @@ export class PersistentShell {
 
       this.sendToShell(commandParts.join("\n"));
 
+      let tailOffset = 0;
+      const tailInterval = setInterval(() => {
+        if (!onChunk) return;
+        try {
+          const stat = fs.statSync(this.stdoutFile);
+          if (stat.size > tailOffset) {
+            const buf = Buffer.alloc(stat.size - tailOffset);
+            const fd = fs.openSync(this.stdoutFile, "r");
+            fs.readSync(fd, buf, 0, buf.length, tailOffset);
+            fs.closeSync(fd);
+            tailOffset = stat.size;
+            onChunk(buf.toString());
+          }
+        } catch {}
+      }, 50);
+
       const start = Date.now();
       const checkCompletion = setInterval(() => {
         try {
@@ -222,6 +268,12 @@ export class PersistentShell {
             this.commandInterrupted
           ) {
             clearInterval(checkCompletion);
+            clearInterval(tailInterval);
+
+            if (this.commandInterrupted) {
+              shellStream.emit("done");
+            }
+
             const stdout = fs.existsSync(this.stdoutFile)
               ? fs.readFileSync(this.stdoutFile, "utf8")
               : "";
@@ -251,10 +303,22 @@ export class PersistentShell {
   private async execWindows(
     command: string,
     timeout: number,
+    onChunk?: (chunk: string) => void,
+    abortSignal?: AbortSignal,
   ): Promise<ExecResult> {
+    if (this.sessionAborted) {
+      return {
+        stdout: "",
+        stderr: "Interrupted",
+        code: SIGTERM_CODE,
+        interrupted: true,
+      };
+    }
+
     return new Promise((resolve) => {
       let stdout = "";
       let stderr = "";
+      let resolved = false;
 
       const child = spawn(
         "powershell.exe",
@@ -268,23 +332,46 @@ export class PersistentShell {
 
       this.activeChild = child;
 
-      child.stdout?.on("data", (d) => (stdout += d.toString()));
-      child.stderr?.on("data", (d) => (stderr += d.toString()));
-
-      const timer = setTimeout(() => {
-        this.killChildren();
+      const doKill = (reason: string) => {
+        if (resolved) return;
+        resolved = true;
+        clearTimeout(timer);
+        if (child.pid) {
+          spawn("taskkill", ["/F", "/T", "/PID", String(child.pid)], {
+            stdio: "ignore",
+          });
+        }
+        this.activeChild = null;
+        shellStream.emit("done");
         resolve({
           stdout,
-          stderr: stderr + "\nCommand timed out",
+          stderr: stderr + `\n${reason}`,
           code: SIGTERM_CODE,
           interrupted: true,
         });
-      }, timeout);
+      };
+
+      abortSignal?.addEventListener("abort", () => doKill("Interrupted"));
+
+      child.stdout?.on("data", (d) => {
+        const chunk = d.toString();
+        stdout += chunk;
+        onChunk?.(chunk);
+      });
+
+      child.stderr?.on("data", (d) => {
+        const chunk = d.toString();
+        stderr += chunk;
+        onChunk?.(chunk);
+      });
+
+      const timer = setTimeout(() => doKill("Command timed out"), timeout);
 
       child.on("close", (code) => {
+        if (resolved) return;
+        resolved = true;
         clearTimeout(timer);
         this.activeChild = null;
-        // update cwd after command
         try {
           const newCwd = require("child_process")
             .execSync("cd", { cwd: this.cwd, encoding: "utf8" })
@@ -295,6 +382,8 @@ export class PersistentShell {
       });
 
       child.on("error", (err) => {
+        if (resolved) return;
+        resolved = true;
         clearTimeout(timer);
         this.activeChild = null;
         resolve({ stdout, stderr: String(err), code: 1, interrupted: false });
