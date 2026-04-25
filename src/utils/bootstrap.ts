@@ -1,8 +1,8 @@
 import { existsSync, writeFileSync } from "fs";
-import { BOOTSTRAP_FILE } from "./env";
+import { BOOTSTRAP_FILE, HUMAN_FILE } from "./env";
 
 export function isBootstrap(): boolean {
-  return !existsSync(BOOTSTRAP_FILE);
+  return !existsSync(BOOTSTRAP_FILE) || !existsSync(HUMAN_FILE);
 }
 
 export function markBootstrapDone() {

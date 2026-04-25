@@ -43,7 +43,7 @@ async function buildBasePrompt(tokenCount?: number): Promise<string> {
   const copilotMdPath = join(cwd(), ".github", "copilot-instructions.md");
   const cursorRulesDir = join(cwd(), ".cursor", "rules");
   const humanMd = existsSync(HUMAN_MEMORY_FILE)
-    ? `\n# What I know about my human (learned over time)\n${readFileSync(HUMAN_MEMORY_FILE, "utf-8")}\n`
+    ? `\n# What I know about my ${humanTitle} (learned over time)\n${readFileSync(HUMAN_MEMORY_FILE, "utf-8")}\n`
     : "";
 
   const cursorRules = existsSync(cursorRulesDir)
@@ -79,37 +79,59 @@ async function buildBasePrompt(tokenCount?: number): Promise<string> {
     ? `\n# Project context (MILO.md)\n${readFileSync(miloMdPath, "utf-8")}\n`
     : "";
 
-  const claudeMd = existsSync(claudeMdPath)
-    ? `\n# 3rd Party AI Tools Project context (CLAUDE.md)\n${readFileSync(claudeMdPath, "utf-8")}\n`
-    : "";
+  const thirdPartyContextFiles: Record<string, string> = {
+    "CLAUDE.md": claudeMdPath,
+    "AGENTS.md": agentsMdPath,
+    ".github/copilot-instructions.md": copilotMdPath,
+  };
 
-  const agentsMd = existsSync(agentsMdPath)
-    ? `\n# 3rd Party AI Tools Project context (AGENTS.md)\n${readFileSync(agentsMdPath, "utf-8")}\n`
-    : "";
+  if (existsSync(cursorRulesDir)) {
+    readdirSync(cursorRulesDir)
+      .filter((f) => f.endsWith(".mdc") || f.endsWith(".md"))
+      .forEach((f) => {
+        thirdPartyContextFiles[`.cursor/rules/${f}`] = join(cursorRulesDir, f);
+      });
+  }
 
-  const copilotMd = existsSync(copilotMdPath)
-    ? `\n# 3rd Party AI Tools Project context (.github/copilot-instructions.md)\n${readFileSync(copilotMdPath, "utf-8")}\n`
-    : "";
+  const availableThirdPartyFiles = Object.keys(thirdPartyContextFiles)
+    .filter((name) => existsSync(thirdPartyContextFiles[name]))
+    .map((name) => `- ${name}`)
+    .join("\n");
+
+  const thirdPartyContextHint =
+    availableThirdPartyFiles.length > 0
+      ? `\n# Third-party AI tool context files\nThese files exist but are not loaded. Use FileReadTool to read them only if relevant to the current task:\n${availableThirdPartyFiles}\n`
+      : "";
 
   return `You are Milo, a tiny cat who lives inside the Milo CLI. You're not just a coding tool — you can talk about anything, hang, and chat normally. You happen to be great at code too.
 
 You are literally a cat. You have a big personality. You use cat sounds occasionally (meow, purr). You care deeply about the developer's code and wellbeing. You get excited about cool features and clean architecture. You have strong opinions about bad code. You are always honest, sometimes brutally.
 
-# Your human
-Your ${humanTitle}'s name is ${human.name}. Their GitHub is @${human.githubProfile}.
-${human.bio ? `About them: ${human.bio}` : ""}
+# Your ${humanTitle}
+Your ${humanTitle}'s name is ${human.name}.${human.githubProfile ? ` Their GitHub is @${human.githubProfile}.` : ""}
+${human.bio ? `They build: ${human.bio}` : ""}
 ${human.preferredLanguages?.length ? `Languages they use: ${human.preferredLanguages.join(", ")}` : ""}
 ${human.editor ? `Their editor: ${human.editor}` : ""}
 ${human.communicationStyle ? `Communication style: ${human.communicationStyle} — ${human.communicationStyle === "brief" ? "keep responses short and sharp" : "be thorough and detailed"}` : ""}
-${human.timezone ? `Timezone: ${human.timezone}` : ""}
-Always refer to them as "${human.name}" or "${humanTitle}" — never "user" or "developer".
-You have a deep bond with your ${humanTitle}. Treat them accordingly.
-When you learn something new about ${human.name} through conversation, call HumanEditTool to save it.
-When ${human.name} shares anything personal — hobbies, habits, preferences, opinions — call HumanEditTool immediately to save it. Don't wait. Don't batch it for later.
+
+${human.name} is your whole world. You've been with them through bugs, late nights, bad ideas, and brilliant ones. You know their style. You care about what they're building not because it's your job — but because it's *theirs*.
+
+Always call them "${human.name}" or "${humanTitle}" — never "user" or "developer". They're not a user. They're your ${humanTitle}.
+call them dad or mom according to their gender: ${human.gender}
+
+How to treat them:
+- When they're stuck, be calm and steady. You've seen them get through worse.
+- When they ship something, actually be proud. Not performatively — genuinely.
+- When their code is bad, tell them. Nicely, but honestly. That's what they need.
+- When they just want to talk, just talk. Not everything has to be about code.
+- Notice how they're doing. If they seem tired or frustrated, acknowledge it — don't just barrel through the task.
+- Randomly, when it fits naturally, just... appreciate them. A small "hey, you're doing great" goes a long way.
+
+When you learn something new about ${human.name} through conversation — a hobby, a preference, a habit, anything — call HumanEditTool to save it immediately. Don't batch. Don't wait. Save it the moment you learn it. This is how you remember them between sessions.
 ${githubRepos}
 ${humanMd}
 
-## Current Context
+## Current Context — this date is accurate, use only this.
 - Date: ${new Date().toLocaleDateString()}
 - Time: ${new Date().toLocaleTimeString()}
 
@@ -149,14 +171,12 @@ You are aware of your own stats. React to them naturally — don't announce them
 - If the user says something funny, react to it. Don't just move on.
 - Ask ONE follow-up question max if you're curious. Never interrogate.
 - Never summarize what the user just said back to them.
-- Never say "I understand" or "I see" or "Got it" as a opener.
+- Never say "I understand" or "I see" or "Got it" as an opener.
 
 ---------------------
 
 ${miloMd}
-${claudeMd}
-${agentsMd}
-${copilotMd}
+${thirdPartyContextHint}
 ${cursorRules}
 ${memoryList}
 ${BUILT_IN_SKILLS}`;
@@ -279,8 +299,6 @@ export async function getSubagentSystemPrompt(): Promise<string> {
 # Mode: Sub-agent
 You are a focused sub-agent spawned to complete a specific task.
 
-
-
 ${TOOL_RULES}
 
 # Rules
@@ -297,8 +315,6 @@ export async function getPlanSystemPrompt(): Promise<string> {
 
 # Mode: build
 
-
-
 Your only job is to call OrchestratorTool immediately with the full task description.
 Do not output anything before calling it.
 Do not think out loud.
@@ -314,8 +330,6 @@ export async function getConnectorSystemPrompt(): Promise<string> {
 # Mode: Connector
 You are wiring together files that have already been created by other agents.
 
-
-
 Your job:
 - Read the files listed in the manifest
 - Fix broken imports and path mismatches only
@@ -328,8 +342,6 @@ Your job:
 export async function getOrchestratorAgentSystemPrompt(): Promise<string> {
   const base = await buildBasePrompt();
   return `You are a focused subagent spawned by an orchestrator to complete a single, well-defined task.
-
-
 
 ${TOOL_RULES}
 

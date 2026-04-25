@@ -28,6 +28,12 @@ Then run:
 milo
 ```
 
+or
+
+```
+milo.cmd // if you are facing ExecutionPolicy issue on Windows
+```
+
 On first launch, Milo will walk you through a quick setup to introduce yourself — your name, GitHub, and a couple preferences. After that, run `/provider add` to configure your AI provider.
 
 ---

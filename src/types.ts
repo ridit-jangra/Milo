@@ -136,7 +136,6 @@ export interface Human {
   preferredLanguages?: string[];
   editor?: string;
   communicationStyle?: "brief" | "detailed";
-  timezone?: string;
   bio?: string;
 }
 

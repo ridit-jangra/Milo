@@ -307,6 +307,7 @@ export default function REPL(): JSX.Element {
                 setBootstrap(false);
                 markBootstrapDone();
               }}
+              columns={columns}
             />
           ) : pendingPermission ? (
             <PermissionCard
