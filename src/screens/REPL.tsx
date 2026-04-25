@@ -334,11 +334,13 @@ export default function REPL(): JSX.Element {
                 onChangeCursorOffset={setCursorOffset}
                 placeholder="ask milo anything..."
                 isDimmed={loading}
-                focus={!loading && !pendingPermission && !pendingWizard}
+                focus={!pendingPermission && !pendingWizard}
+                disabled={loading}
                 onHistoryUp={onHistoryUp}
                 onHistoryDown={onHistoryDown}
                 onHistoryReset={onHistoryReset}
-                onEscape={abort as any}
+                onEscape={abort}
+                // highlightPastedText={true}
               />
             </Box>
           )}

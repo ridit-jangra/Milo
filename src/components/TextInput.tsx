@@ -29,6 +29,7 @@ export type Props = {
   readonly cursorOffset: number;
   readonly onChangeCursorOffset: (offset: number) => void;
   readonly onEscape?: () => void;
+  disabled?: boolean;
 };
 
 export default function TextInput({
@@ -55,6 +56,7 @@ export default function TextInput({
   cursorOffset,
   onChangeCursorOffset,
   onEscape,
+  disabled,
 }: Props): JSX.Element {
   const { onInput, renderedValue } = useTextInput({
     value: originalValue,
@@ -76,6 +78,7 @@ export default function TextInput({
     externalOffset: cursorOffset,
     onOffsetChange: onChangeCursorOffset,
     onEscape,
+    disabled,
   });
 
   const [pasteState, setPasteState] = React.useState<{

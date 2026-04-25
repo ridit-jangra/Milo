@@ -39,6 +39,7 @@ export type UseTextInputProps = {
   disableCursorMovementForUpDownKeys?: boolean;
   externalOffset: number;
   onOffsetChange: (offset: number) => void;
+  disabled?: boolean;
 };
 
 export type UseTextInputResult = {
@@ -68,6 +69,7 @@ export function useTextInput({
   externalOffset,
   onOffsetChange,
   onEscape,
+  disabled,
 }: UseTextInputProps): UseTextInputResult {
   const offset = externalOffset;
   const setOffset = onOffsetChange;
@@ -168,7 +170,7 @@ export function useTextInput({
       return cursor.backspace().insert("\n");
     }
     if (key.meta) return cursor.insert("\n");
-    onSubmit?.(originalValue);
+    if (!disabled) onSubmit?.(originalValue);
   }
 
   function upOrHistoryUp(): MaybeCursor {
