@@ -415,7 +415,7 @@ export default function REPL(): JSX.Element {
                 cursorOffset={cursorOffset}
                 onChangeCursorOffset={setCursorOffset}
                 placeholder="ask milo anything..."
-                isDimmed={loading}
+                // isDimmed={loading}
                 focus={!pendingPermission && !pendingWizard}
                 disabled={loading}
                 onHistoryUp={onHistoryUp}
