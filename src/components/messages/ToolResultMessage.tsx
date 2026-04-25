@@ -168,7 +168,7 @@ export function ToolResultMessage({
     toolName === "BashTool"
       ? String((output as any)?.output ?? "")
           .split("\n")
-          .slice(0, 10)
+          .slice(0, 20)
       : null;
 
   return (

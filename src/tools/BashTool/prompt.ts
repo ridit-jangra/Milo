@@ -69,9 +69,12 @@ Before executing the command, please follow these steps:
    - Provide the processed output.
    - Include any errors that occurred.
 
+Platform: ${platform()}
+
 Usage notes:
 ${PLATFORM_NOTES}
 - Use ; on windows and && on linux or mac to chain multiple commands, never newlines
+- Always use ; on windows to chain multiple commands. ALWAYS.
 - Avoid cat, head, tail — use ${FileReadTool.title} to read files instead
 - To list files in a directory, use GlobTool with pattern "dirname/**/*" — never use dir or ls for this
 - Timeout defaults to 30 minutes, max 10 minutes per command
