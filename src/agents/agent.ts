@@ -1,7 +1,7 @@
 import { runLLM } from "../utils/llm";
 import type { StepToolCall, StepToolResult } from "../types";
 import { getAgentSystemPrompt } from "../utils/systemPrompt";
-import { agentTools, subagentTools, withCompact } from "../utils/tools";
+import { agentTools, subagentTools } from "../utils/tools";
 import type { Session } from "../utils/session";
 
 export async function createAgent(
@@ -9,7 +9,7 @@ export async function createAgent(
   session?: Session,
   onToolCall?: (t: StepToolCall) => void,
   onToolResult?: (t: StepToolResult) => void,
-  onCompact?: (s: Session) => void,
+
   abortSignal?: AbortSignal,
 ) {
   return runLLM({
@@ -17,10 +17,7 @@ export async function createAgent(
     prompt,
     session,
     mode: "agent",
-    tools:
-      session && onCompact
-        ? withCompact(agentTools, session, onCompact)
-        : agentTools,
+    tools: agentTools,
     onToolCall,
     onToolResult,
     abortSignal,
@@ -40,10 +37,7 @@ export async function createSubAgent(
     prompt,
     session,
     mode: "subagent",
-    tools:
-      session && onCompact
-        ? withCompact(subagentTools, session, onCompact)
-        : subagentTools,
+    tools: subagentTools,
     onToolCall,
     onToolResult,
     abortSignal,

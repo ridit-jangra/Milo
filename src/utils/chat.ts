@@ -1,7 +1,7 @@
 import { runLLM } from "./llm";
 import type { StepToolCall, StepToolResult } from "../types";
 import { getChatSystemPrompt } from "./systemPrompt";
-import { chatTools, withCompact } from "./tools";
+import { chatTools } from "./tools";
 import type { Session } from "./session";
 
 export async function chatWithModel(
@@ -9,7 +9,6 @@ export async function chatWithModel(
   session?: Session,
   onToolCall?: (t: StepToolCall) => void,
   onToolResult?: (t: StepToolResult) => void,
-  onCompact?: (s: Session) => void,
   abortSignal?: AbortSignal,
 ) {
   return runLLM({
@@ -17,10 +16,7 @@ export async function chatWithModel(
     prompt,
     session,
     mode: "chat",
-    tools:
-      session && onCompact
-        ? withCompact(chatTools, session, onCompact)
-        : chatTools,
+    tools: chatTools,
     onToolCall,
     onToolResult,
     abortSignal,

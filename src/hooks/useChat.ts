@@ -48,7 +48,7 @@ export function useChat(initialMode: Mode = "agent") {
     (compacted: Session) => {
       setSession(compacted);
       sessionRef.current = compacted;
-      pushMessage("🗜 Context compacted. Continuing from summary.");
+      pushMessage("Context compacted. Continuing from summary.");
     },
     [pushMessage],
   );
@@ -176,7 +176,7 @@ export function useChat(initialMode: Mode = "agent") {
                 currentSession,
                 onToolCall,
                 onToolResult,
-                onCompact,
+
                 abortControllerRef.current.signal,
               )
             : await createAgent(
@@ -184,7 +184,6 @@ export function useChat(initialMode: Mode = "agent") {
                 currentSession,
                 onToolCall,
                 onToolResult,
-                onCompact,
                 abortControllerRef.current.signal,
               );
 

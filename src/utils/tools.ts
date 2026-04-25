@@ -9,12 +9,10 @@ import { GrepTool } from "../tools/GrepTool/tool";
 import { MemoryEditTool } from "../tools/MemoryEditTool/tool";
 import { MemoryReadTool } from "../tools/MemoryReadTool/tool";
 import { MemoryWriteTool } from "../tools/MemoryWriteTool/tool";
-import { createCompactTool } from "../tools/CompactTool/tool";
 import { RecallTool } from "../tools/RecallTool/tool";
 import { ThinkTool } from "../tools/ThinkTool/tool";
 import { WebFetchTool } from "../tools/WebFetchTool/tool";
 import { WebSearchTool } from "../tools/WebSearchTool/tool";
-
 import { DownloadTool } from "../tools/DownloadTool/tool";
 import { HumanEditTool } from "../tools/HumanEditTool/tool";
 
@@ -33,7 +31,6 @@ export const agentTools = {
   RecallTool,
   WebFetchTool,
   WebSearchTool,
-
   DownloadTool,
   HumanEditTool,
 };
@@ -46,7 +43,6 @@ export const orchestratorAgentTools = {
   GrepTool,
   GlobTool,
   ThinkTool,
-
   DownloadTool,
 };
 
@@ -69,7 +65,6 @@ export const chatTools = {
   MemoryReadTool,
   WebFetchTool,
   WebSearchTool,
-
   HumanEditTool,
 };
 
@@ -79,17 +74,5 @@ export const connectorTools = {
   GlobTool,
   BashTool,
   ThinkTool,
-
   DownloadTool,
 };
-
-export function withCompact(
-  tools: Record<string, unknown>,
-  session: Session,
-  onCompact: (s: Session) => void,
-) {
-  return {
-    ...tools,
-    CompactTool: createCompactTool(session, onCompact),
-  };
-}

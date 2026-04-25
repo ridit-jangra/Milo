@@ -9,6 +9,7 @@ import {
 import type { LLMOptions } from "../types";
 import {
   COMPACTION_THRESHOLD,
+  compactSession,
   estimateTokens,
   shouldCompact,
 } from "./compaction";
@@ -27,18 +28,24 @@ export async function runLLM({
   let activeSession = session ?? createSession();
   loadMemoryIntoSession(activeSession);
 
+  const { model } = await getModel();
+
   if (shouldCompact(activeSession)) {
-    activeSession.messages.push({
-      role: "user",
-      content:
-        "Your context is very long. Call CompactTool now with a full summary before doing anything else.",
+    // activeSession.messages.push({
+    //   role: "user",
+    //   content:
+    //     "Your context is very long. Call CompactTool now with a full summary before doing anything else.",
+    // });
+    const summary = await generateText({
+      model,
+      prompt: `summarize this chat: ${JSON.stringify(activeSession.messages)}`,
     });
+    compactSession(activeSession, summary.text);
   }
 
   const messagesBeforePrompt = [...activeSession.messages];
   activeSession.messages.push({ role: "user", content: prompt });
 
-  const { model } = await getModel();
   const tokenCount = estimateTokens(activeSession.messages);
 
   const toolReminder = tools

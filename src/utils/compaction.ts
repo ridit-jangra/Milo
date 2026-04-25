@@ -1,5 +1,3 @@
-import { generateText } from "ai";
-import { getModel } from "./model";
 import type { Session } from "./session";
 import type { ModelMessage } from "ai";
 

@@ -108,28 +108,10 @@ export async function handleChat(
       sseWrite(res, { type: "tool_result", ...t });
     };
 
-    const onCompact = (compacted: typeof session) => {
-      console.log(`[chat] compacted session=${sessionId}`);
-      updateDaemonSession(sessionId, compacted);
-      sseWrite(res, { type: "compacted" });
-    };
-
     const result =
       mode === "chat"
-        ? await chatWithModel(
-            prompt,
-            session,
-            onToolCall,
-            onToolResult,
-            onCompact,
-          )
-        : await createAgent(
-            prompt,
-            session,
-            onToolCall,
-            onToolResult,
-            onCompact,
-          );
+        ? await chatWithModel(prompt, session, onToolCall, onToolResult)
+        : await createAgent(prompt, session, onToolCall, onToolResult);
 
     updateDaemonSession(sessionId, result.session);
 
