@@ -9,7 +9,6 @@ import {
   type ProviderType,
   type ProviderConfig,
 } from "../utils/providers";
-import { useTerminalSize } from "../hooks/useTerminalSize";
 import { arrowLeft, arrowRight, tick, upDownArrow } from "../icons";
 
 type WizardMode = "add" | "edit" | "remove" | "list";

@@ -1,4 +1,3 @@
-import type { Session } from "../utils/session";
 import { AgentTool } from "../tools/AgentTool/tool";
 import { BashTool } from "../tools/BashTool/tool";
 import { FileEditTool } from "../tools/FileEditTool/tool";

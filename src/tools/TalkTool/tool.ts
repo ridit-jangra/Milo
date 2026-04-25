@@ -1,8 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
-
 import { DESCRIPTION } from "./prompt";
-import { messageQueue } from "../../agents/queue/messageQueue";
 import { agentsMap } from "../../agents/customAgent";
 
 export const TalkTool = tool({

@@ -2,8 +2,12 @@ import { EventEmitter } from "events";
 
 const KEY = "__milo_shell_stream__";
 
-if (!(process as any)[KEY]) {
-  (process as any)[KEY] = new EventEmitter();
+type ProcessWithStream = NodeJS.Process & Record<string, unknown>;
+
+const proc = process as ProcessWithStream;
+
+if (!proc[KEY]) {
+  proc[KEY] = new EventEmitter();
 }
 
-export const shellStream: EventEmitter = (process as any)[KEY];
+export const shellStream: EventEmitter = proc[KEY] as EventEmitter;

@@ -246,7 +246,6 @@ function SelectorInput({
   onSubmit: () => void;
   onEscape: () => void;
 }): React.ReactNode {
-  const theme = getTheme();
   return (
     <TextInput
       value=""

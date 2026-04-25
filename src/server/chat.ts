@@ -5,7 +5,6 @@ import { chatWithModel } from "../utils/chat";
 import { onPermissionRequest, allowInSession } from "../permissions";
 import { getDaemonSession, updateDaemonSession } from "./sessions";
 import { requestPermission as serverRequestPermission } from "./permissions";
-import type { Mode } from "../types";
 
 // SSE helper
 function sseWrite(res: ServerResponse, data: object) {

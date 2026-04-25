@@ -6,7 +6,6 @@ import { getTheme } from "../../utils/theme";
 import { useTerminalSize } from "../../hooks/useTerminalSize";
 import { StructuredDiff } from "../StructuredDiff";
 import { star, cornerBottomLeft, line, dot } from "../../icons";
-import { applyMarkdown } from "../../utils/markdown";
 import { HighlightedCode } from "../HighlightedCode";
 
 type Props = {

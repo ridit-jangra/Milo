@@ -143,7 +143,9 @@ export const RecallTool = tool({
     return {
       query,
       total_matches: results.length,
-      results: results.slice(0, max_results).map(({ score, ...rest }) => rest),
+      results: results
+        .slice(0, max_results)
+        .map(({ score: _score, ...rest }) => rest),
     };
   },
 });

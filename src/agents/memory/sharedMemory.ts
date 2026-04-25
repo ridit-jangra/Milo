@@ -4,7 +4,7 @@ export const sharedMemory = {
     { agent: string; input?: unknown; result: unknown; timestamp: Date }
   >(),
 
-  record(agent: string, toolName: string, result: unknown, input?: unknown) {
+  record(agent: string, toolName: string, result: unknown) {
     const key = `${toolName}:${JSON.stringify(result)}`;
     this.toolCalls.set(key, { agent, result, timestamp: new Date() });
   },

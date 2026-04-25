@@ -9,5 +9,7 @@ export function markBootstrapDone() {
   if (existsSync(BOOTSTRAP_FILE)) return;
   try {
     writeFileSync(BOOTSTRAP_FILE, "");
-  } catch {}
+  } catch {
+    // fail silently
+  }
 }

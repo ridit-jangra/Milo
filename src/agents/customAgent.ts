@@ -1,5 +1,7 @@
 // TESTING STUFF, CAN BE ADDED IN FUTURE VERSIONS.
 
+/* eslint-disable */
+
 import { getSwarmAgentSystemPrompt } from "../utils/systemPrompt";
 import { createSession, saveSession, type Session } from "../utils/session";
 import type { agentTools } from "../utils/tools";
@@ -15,14 +17,13 @@ import { repairJSON } from "../utils/json";
 export async function runLLM({
   system,
   tools,
-  session,
   prompt,
   mode = "agent",
   onToolCall,
   onToolResult,
   abortSignal,
 }: LLMOptions): Promise<{ text: string; session: Session }> {
-  let activeSession = createSession();
+  const activeSession = createSession();
 
   const messagesBeforePrompt = [...activeSession.messages];
   activeSession.messages.push({ role: "user", content: prompt });
@@ -44,7 +45,7 @@ export async function runLLM({
     stopWhen: stepCountIs(stepLimits[mode] ?? 100),
     tools,
     abortSignal,
-    experimental_repairToolCall: async ({ toolCall, error }) => {
+    experimental_repairToolCall: async ({ toolCall }) => {
       const repaired = repairJSON(toolCall.input as string);
       if (repaired === null) return null;
       return { ...toolCall, input: JSON.parse(repaired) };
@@ -127,7 +128,7 @@ export class CustomAgent {
           console.log(`💬 [${(t.input as any)?.name}] → ${this.name}`);
           console.log(`   "${(t.output as any)?.response}"`);
         }
-        sharedMemory.record(this.name, t.toolName, t.output, t.input);
+        sharedMemory.record(this.name, t.toolName, t.output);
       },
       abortSignal,
       session: this.session,

@@ -25,7 +25,7 @@ export async function runLLM({
   onToolResult,
   abortSignal,
 }: LLMOptions): Promise<{ text: string; session: Session }> {
-  let activeSession = session ?? createSession();
+  const activeSession = session ?? createSession();
   loadMemoryIntoSession(activeSession);
 
   const { model } = await getModel();
@@ -70,7 +70,7 @@ export async function runLLM({
     stopWhen: stepCountIs(stepLimits[mode] ?? 100),
     tools,
     abortSignal,
-    experimental_repairToolCall: async ({ toolCall, error }) => {
+    experimental_repairToolCall: async ({ toolCall }) => {
       const repaired = repairJSON(toolCall.input as string);
       if (repaired === null) return null;
       return { ...toolCall, input: JSON.parse(repaired) };

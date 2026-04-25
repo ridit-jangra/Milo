@@ -1,5 +1,4 @@
-import { CONFIG_FILE, MILO_BASE_DIR } from "./env";
-import { join } from "path";
+import { CONFIG_FILE } from "./env";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import type { Theme } from "../types";
 

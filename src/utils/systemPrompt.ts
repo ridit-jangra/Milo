@@ -4,13 +4,6 @@ import { GITHUB_REPOS_FILE, HUMAN_MEMORY_FILE, MEMORY_DIR } from "./env";
 import { BUILT_IN_SKILLS } from "./skills";
 import { readPet, getMoodEmoji, renderXpBar } from "../pet";
 import { readHuman } from "../human";
-import {
-  agentTools,
-  chatTools,
-  subagentTools,
-  orchestratorAgentTools,
-  connectorTools,
-} from "./tools";
 import { existsSync, readFileSync, readdirSync } from "fs";
 import { join } from "path";
 import { fetchRepos } from "./github-repo";
@@ -19,10 +12,6 @@ const isWindows = platform() === "win32";
 const PLATFORM = isWindows
   ? "Windows — use dir instead of ls, findstr instead of grep, backslashes in paths"
   : `${platform()} — use standard unix commands`;
-
-function toolList(tools: Record<string, unknown>): string {
-  return Object.keys(tools).join(", ");
-}
 
 async function buildBasePrompt(tokenCount?: number): Promise<string> {
   const pet = await readPet();

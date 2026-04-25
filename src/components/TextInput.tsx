@@ -38,7 +38,6 @@ export default function TextInput({
   focus = true,
   mask,
   multiline = false,
-  highlightPastedText = false,
   showCursor = true,
   onChange,
   onSubmit,

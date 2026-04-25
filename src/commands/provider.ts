@@ -10,7 +10,7 @@ const command = {
   userFacingName() {
     return "provider";
   },
-  async call(args: string, { pushMessage, openWizard }) {
+  async call(args: string, { openWizard }) {
     const sub = args.trim().split(" ")[0];
 
     if (!sub || sub === "list") {

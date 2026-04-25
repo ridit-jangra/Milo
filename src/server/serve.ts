@@ -10,8 +10,6 @@ import {
 } from "./sessions";
 import { handleChat } from "./chat";
 
-const DEFAULT_PORT = 6969;
-
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve) => {
     let body = "";
@@ -57,7 +55,9 @@ const routes: Array<{
       const body = await readBody(req);
       const { mode } = body ? JSON.parse(body) : {};
       const entry = createDaemonSession(mode ?? "agent");
-      console.log(`[session] created id=${entry.session.id} mode=${entry.mode}`);
+      console.log(
+        `[session] created id=${entry.session.id} mode=${entry.mode}`,
+      );
       json(res, 201, { id: entry.session.id, mode: entry.mode });
     },
   },

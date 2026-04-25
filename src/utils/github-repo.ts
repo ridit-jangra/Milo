@@ -1,5 +1,4 @@
 import { mkdirSync, writeFileSync, existsSync, statSync } from "fs";
-import { join } from "path";
 import { GITHUB_REPOS_FILE, MEMORY_DIR } from "../utils/env";
 
 const ONE_DAY = 24 * 60 * 60 * 1000;
@@ -33,5 +32,7 @@ export async function fetchRepos(githubProfile: string): Promise<void> {
 
     mkdirSync(MEMORY_DIR, { recursive: true });
     writeFileSync(GITHUB_REPOS_FILE, md, "utf-8");
-  } catch {}
+  } catch {
+    // fail silently
+  }
 }

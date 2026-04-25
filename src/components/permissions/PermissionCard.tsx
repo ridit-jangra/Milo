@@ -6,13 +6,7 @@ import { StructuredDiff } from "../StructuredDiff";
 import { parsePatch } from "diff";
 import type { PermissionDecision } from "../../permissions";
 import type { PermissionRequest } from "../../types";
-import {
-  arrowRight,
-  cornerBottomLeft,
-  cornerTopLeft,
-  line,
-  upDownArrow,
-} from "../../icons";
+import { arrowRight, cornerBottomLeft, line, upDownArrow } from "../../icons";
 
 type Props = {
   permission: PermissionRequest;

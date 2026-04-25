@@ -324,16 +324,6 @@ export default function REPL(): JSX.Element {
                   </Text>
                 </Box>
                 {visibleSubtools.map((sub) => {
-                  const preview =
-                    sub.type === "tool_call"
-                      ? String(JSON.stringify(sub.input ?? "")).slice(
-                          0,
-                          columns - 24,
-                        )
-                      : String(JSON.stringify(sub.output ?? "")).slice(
-                          0,
-                          columns - 24,
-                        );
                   return (
                     <Box key={sub.id} marginLeft={2}>
                       <Message msg={sub} addMargin={true} />

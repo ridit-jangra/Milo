@@ -54,7 +54,6 @@ export function useTextInput({
   onChange,
   onSubmit,
   onExit,
-  onExitMessage,
   onMessage,
   onHistoryUp,
   onHistoryDown,

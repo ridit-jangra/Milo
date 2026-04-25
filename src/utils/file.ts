@@ -25,7 +25,7 @@ export function findSimilarFile(filePath: string): string | undefined {
         basename(f, extname(f)) === fileBaseName && join(dir, f) !== filePath,
     );
     return similar[0];
-  } catch (err) {
+  } catch {
     return undefined;
   }
 }
@@ -36,7 +36,7 @@ export function isDirEmpty(dirPath: string): boolean {
     const firstEntry = dir.readSync();
     dir.closeSync();
     return firstEntry === null;
-  } catch (err) {
+  } catch {
     return false;
   }
 }

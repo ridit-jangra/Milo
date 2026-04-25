@@ -9,11 +9,7 @@ type Props = {
   isFirst?: boolean;
 };
 
-export function UserMessage({
-  text,
-  addMargin = false,
-  isFirst = false,
-}: Props): React.ReactNode {
+export function UserMessage({ text, isFirst = false }: Props): React.ReactNode {
   const { columns } = useTerminalSize();
   if (!text) return null;
 

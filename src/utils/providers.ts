@@ -96,19 +96,22 @@ export function buildProvider(config: ProviderConfig): LanguageModel {
       if (!config.apiKey) {
         throw new Error(
           "Groq API key missing. Use `/providers` to set credentials.",
+          { cause: "No apiKey found" },
         );
       }
       try {
         return createGroq({ apiKey: config.apiKey })(config.model);
       } catch (error) {
-        throw new Error(
-          `Groq connection failed: ${(error as unknown as any).message}`,
-        );
+        throw new Error(`Groq connection failed: ${(error as any).message}`, {
+          cause: error,
+        });
       }
+
     case "openai":
       if (!config.apiKey) {
         throw new Error(
           "OpenAI API key missing. Use `/providers` to set credentials.",
+          { cause: "No apiKey found" },
         );
       }
       try {
@@ -117,37 +120,43 @@ export function buildProvider(config: ProviderConfig): LanguageModel {
           ...(config.baseURL ? { baseURL: config.baseURL } : {}),
         })(config.model);
       } catch (error) {
-        throw new Error(
-          `OpenAI connection failed: ${(error as unknown as any).message}`,
-        );
+        throw new Error(`OpenAI connection failed: ${(error as any).message}`, {
+          cause: error,
+        });
       }
+
     case "anthropic":
       if (!config.apiKey) {
         throw new Error(
           "Anthropic API key missing. Use `/providers` to set credentials.",
+          { cause: "No apiKey found" },
         );
       }
       try {
         return createAnthropic({ apiKey: config.apiKey })(config.model);
       } catch (error) {
         throw new Error(
-          `Anthropic connection failed: ${(error as unknown as any).message}`,
+          `Anthropic connection failed: ${(error as any).message}`,
+          { cause: error },
         );
       }
+
     case "ollama":
       try {
         return createOllama({
           baseURL: config.baseURL ?? "http://localhost:11434/api",
         })(config.model);
       } catch (error) {
-        throw new Error(
-          `Ollama connection failed: ${(error as unknown as any).message}`,
-        );
+        throw new Error(`Ollama connection failed: ${(error as any).message}`, {
+          cause: error,
+        });
       }
+
     case "google":
       if (!config.apiKey) {
         throw new Error(
           "Google Gemini API key missing. Use `/providers` to set credentials.",
+          { cause: "No apiKey found" },
         );
       }
       try {
@@ -156,13 +165,15 @@ export function buildProvider(config: ProviderConfig): LanguageModel {
         );
       } catch (error) {
         throw new Error(
-          `Google Gemini connection failed: ${(error as unknown as any).message}`,
+          `Google Gemini connection failed: ${(error as any).message}`,
+          { cause: error },
         );
       }
     case "openrouter":
       if (!config.apiKey) {
         throw new Error(
           "OpenRouter API key missing. Use `/providers` to set credentials.",
+          { cause: "No apikey found" },
         );
       }
       try {
@@ -172,7 +183,8 @@ export function buildProvider(config: ProviderConfig): LanguageModel {
         })(config.model);
       } catch (error) {
         throw new Error(
-          `OpenRouter connection failed: ${(error as unknown as any).message}`,
+          `OpenRouter connection failed: ${(error as unknown as { message: string }).message}`,
+          { cause: error },
         );
       }
   }
