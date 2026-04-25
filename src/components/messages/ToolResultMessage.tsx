@@ -155,7 +155,12 @@ export function ToolResultMessage({
 }: Props): React.ReactNode {
   const { columns } = useTerminalSize();
   const action = getAction(toolName, input);
-  const preview = action.length > 60 ? action.slice(0, 60) + "…" : action;
+  const preview =
+    action.length > 60
+      ? toolName === "BashTool"
+        ? action
+        : action.slice(0, 60) + "…"
+      : action;
   const outputPreview = getOutputPreview(toolName, output);
   const hunk = getDiff(toolName, output);
 
