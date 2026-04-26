@@ -3,10 +3,12 @@ import { Box, Text } from "ink";
 import { getTheme } from "../utils/theme";
 import { useTerminalSize } from "../hooks/useTerminalSize";
 import type { Mode } from "../types";
-import { bullet, diamond, star } from "../icons";
+import { bullet, coin, diamond, star } from "../icons";
 import { readPet, getStageColor, getPetStage, type PetStage } from "../pet";
 import type { Pet } from "../types";
 import Spinner from "ink-spinner";
+import { getBalance } from "../wallet";
+import { isLoggedIn } from "../auth";
 
 type Props = {
   model: string;
@@ -33,16 +35,36 @@ export function StatusBar({
 }: Props): React.ReactNode {
   const { columns } = useTerminalSize();
   const [pet, setPet] = useState<Pet | null>(null);
+  const [coins, setCoins] = useState<number | null>(null);
 
   useEffect(() => {
+    // load pet
     readPet()
       .then(setPet)
       .catch(() => {});
+
+    // load coins if logged in
+    isLoggedIn().then((loggedIn) => {
+      if (!loggedIn) return;
+      getBalance()
+        .then(setCoins)
+        .catch(() => {});
+    });
+
     const interval = setInterval(() => {
       readPet()
         .then(setPet)
         .catch(() => {});
+
+      // refresh coins every 5s too
+      isLoggedIn().then((loggedIn) => {
+        if (!loggedIn) return;
+        getBalance()
+          .then(setCoins)
+          .catch(() => {});
+      });
     }, 5000);
+
     return () => clearInterval(interval);
   }, []);
 
@@ -89,6 +111,12 @@ export function StatusBar({
               <Text color={getTheme().warning}>{diamond}</Text>
               <Text color={getTheme().success}>{xpPart}</Text>
             </Box>
+            {coins !== null && (
+              <Box>
+                <Text color={getTheme().warning}> {coin} </Text>
+                <Text color={getTheme().warning}>{coins}</Text>
+              </Box>
+            )}
           </>
         )}
       </Box>

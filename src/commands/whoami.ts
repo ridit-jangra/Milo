@@ -1,6 +1,7 @@
 import type { Command, CommandContext } from "../types";
 import { getAuthState } from "../auth";
 import { getBalance } from "../wallet";
+import { coin } from "../icons";
 
 const command = {
   type: "local",
@@ -24,7 +25,7 @@ const command = {
         `  ─────────────────────────────`,
         `  Email   ${email}`,
         `  ID      ${userId}`,
-        `  Coins   ${balance} 🪙`,
+        `  Coins   ${balance} ${coin}`,
         ``,
         `  Type /achievements to see your progress.`,
         ``,
@@ -37,7 +38,7 @@ const command = {
         `  👤 Anonymous`,
         `  ─────────────────────────────`,
         `  Milo is working but not tracking coins.`,
-        `  Type /login <email> to get started 🪙`,
+        `  Type /login <email> to get started ${coin}`,
         ``,
       ].join("\n");
     }
@@ -46,7 +47,7 @@ const command = {
       ``,
       `  🔒 Not logged in`,
       `  ─────────────────────────────`,
-      `  Type /login <email> to get started 🪙`,
+      `  Type /login <email> to get started ${coin}`,
       ``,
     ].join("\n");
   },

@@ -1,10 +1,12 @@
 import { supabase } from "../utils/supabase";
 import { getUserId } from "../auth";
+import { coin } from "../icons";
 
 export type LeaderboardEntry = {
   username: string | null;
   score: number;
   user_id: string;
+  level: number;
 };
 
 export async function fetchLeaderboard(
@@ -60,7 +62,7 @@ export function renderLeaderboard(
     const name = entry.username ?? "anonymous cat";
     const isMe = entry.user_id === myUserId;
     const tag = isMe ? " ← you" : "";
-    const score = `${entry.score} 🪙`;
+    const score = `${entry.score} ${coin}`;
     lines.push(`  ${medal}  ${name.padEnd(16)} ${score}${tag}`);
   });
 
@@ -68,7 +70,7 @@ export function renderLeaderboard(
 
   if (myRank) {
     lines.push(
-      `  Your rank: #${myRank.rank}  •  ${myRank.score} purr-coins 🪙`,
+      `  Your rank: #${myRank.rank}  •  ${myRank.score} purr-coins ${coin}`,
     );
   }
 

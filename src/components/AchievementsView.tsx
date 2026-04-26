@@ -4,7 +4,7 @@ import { getTheme } from "../utils/theme";
 import { getAllAchievements, getUnlockedAchievements } from "../achievements";
 import { getBalance } from "../wallet";
 import { isLoggedIn } from "../auth";
-import { diamond, star } from "../icons";
+import { coin, diamond, star } from "../icons";
 import type { Achievement, UserAchievement } from "../achievements";
 
 type AchievementRowProps = {
@@ -47,7 +47,7 @@ function AchievementRow({
             color={unlocked ? theme.warning : theme.secondaryText}
             dimColor={!unlocked}
           >
-            +{achievement.reward} 🪙
+            +{achievement.reward} {coin}
           </Text>
         </Box>
       </Box>
@@ -128,7 +128,9 @@ export function AchievementsView({
         {loggedIn && (
           <Box gap={1}>
             <Text color={theme.secondaryText}>{diamond}</Text>
-            <Text color={theme.warning}>{balance} 🪙</Text>
+            <Text color={theme.warning}>
+              {balance} {coin}
+            </Text>
           </Box>
         )}
       </Box>

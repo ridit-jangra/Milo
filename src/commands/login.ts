@@ -1,12 +1,13 @@
 import type { Command } from "../types";
 import { sendMagicLink, verifyOtp, getAuthState } from "../auth";
+import { coin } from "../icons";
 
 let pendingEmail: string | null = null;
 
 const command = {
   type: "local",
   name: "login",
-  description: "Login to Milo to earn purr-coins 🪙",
+  description: `Login to Milo to earn purr-coins ${coin}`,
   isEnabled: true,
   isHidden: false,
   userFacingName() {
@@ -33,7 +34,7 @@ const command = {
       return [
         `✅ Logged in as ${email}! Welcome to the leaderboard 👑`,
         ``,
-        `You can now earn purr-coins 🪙 and unlock achievements 🐾`,
+        `You can now earn purr-coins ${coin} and unlock achievements 🐾`,
         `Type /achievements to see what you can unlock.`,
       ].join("\n");
     }
