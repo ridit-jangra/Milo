@@ -1,6 +1,5 @@
 import type { ToolSet } from "ai";
 import type { Session } from "./utils/session";
-import type { WizardMode } from "./hooks/useChat";
 import type React from "react";
 
 export type Mode = "chat" | "agent" | "build";

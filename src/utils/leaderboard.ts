@@ -1,5 +1,4 @@
 import { supabase } from "../utils/supabase";
-import { getBalance } from "../wallet";
 import { getUserId } from "../auth";
 
 export type LeaderboardEntry = {

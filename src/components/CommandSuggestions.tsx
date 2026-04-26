@@ -10,8 +10,6 @@ type Props = {
   selectedIndex: number;
 };
 
-/* ---------------- Highlight ---------------- */
-
 function HighlightedName({ name, query }: { name: string; query: string }) {
   if (!query) return <Text color={getTheme().secondary}>/{name}</Text>;
 
@@ -34,8 +32,6 @@ function HighlightedName({ name, query }: { name: string; query: string }) {
     </Text>
   );
 }
-
-/* ---------------- Matching Logic ---------------- */
 
 type MatchResult =
   | { type: "none" }
@@ -91,13 +87,11 @@ function getMatching(query: string): MatchResult {
   return { type: "commands", items: commands };
 }
 
-/* ---------------- Windowing ---------------- */
-
 function getWindow<T>(items: T[], selectedIndex: number, maxVisible: number) {
   let start = selectedIndex - Math.floor(maxVisible / 2);
   start = Math.max(0, start);
 
-  let end = Math.min(start + maxVisible, items.length);
+  const end = Math.min(start + maxVisible, items.length);
 
   if (end - start < maxVisible) {
     start = Math.max(0, end - maxVisible);
@@ -110,8 +104,6 @@ function getWindow<T>(items: T[], selectedIndex: number, maxVisible: number) {
   };
 }
 
-/* ---------------- Component ---------------- */
-
 export function CommandSuggestions({
   query,
   selectedIndex,
@@ -121,7 +113,6 @@ export function CommandSuggestions({
 
   const MAX_VISIBLE = 4;
 
-  /* ---------- COMMANDS ---------- */
   if (result.type === "commands") {
     const matches = result.items;
     if (matches.length === 0) return null;
@@ -175,7 +166,6 @@ export function CommandSuggestions({
     );
   }
 
-  /* ---------- SUBCOMMANDS ---------- */
   if (result.type === "subcommands") {
     const { command, items } = result;
     if (items.length === 0) return null;

@@ -11,7 +11,6 @@ import { Message } from "../components/Message";
 import { pointer, line, cornerBottomLeft } from "../icons";
 import { shellStream } from "../utils/shellStream";
 import { Header } from "../components/Header";
-import { ProviderWizard } from "../components/ProviderWizard";
 import {
   CommandSuggestions,
   getMatchingCommands,

@@ -12,7 +12,7 @@ const command = {
   userFacingName() {
     return "login";
   },
-  async call(args: string, context: CommandContext): Promise<string> {
+  async call(args: string): Promise<string> {
     const input = args.trim().replace(/^mailto:/i, "");
 
     const state = await getAuthState();

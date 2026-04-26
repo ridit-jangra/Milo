@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { getTheme } from "../utils/theme";
-import { useTerminalSize } from "../hooks/useTerminalSize";
 import { getAllAchievements, getUnlockedAchievements } from "../achievements";
 import { getBalance } from "../wallet";
 import { isLoggedIn } from "../auth";
@@ -68,13 +67,12 @@ export function AchievementsView({
   onDone: () => void;
 }): React.ReactNode {
   const theme = getTheme();
-  const { columns } = useTerminalSize();
 
   const [all, setAll] = useState<Achievement[]>([]);
   const [unlocked, setUnlocked] = useState<UserAchievement[]>([]);
   const [balance, setBalance] = useState<number>(0);
   const [loggedIn, setLoggedIn] = useState<boolean>(false);
-  const [loading, setLoading] = useState(true);
+  const [_, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
