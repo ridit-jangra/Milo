@@ -8,6 +8,12 @@ const command = {
   description: "Manage AI providers",
   isEnabled: true,
   isHidden: false,
+  subcommands: [
+    { name: "list", description: "List providers" },
+    { name: "add", description: "Add a provider" },
+    { name: "remove", description: "Remove a provider" },
+    { name: "use", description: "Switch provider" },
+  ],
   userFacingName() {
     return "provider";
   },

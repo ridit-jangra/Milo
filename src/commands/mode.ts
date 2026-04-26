@@ -6,6 +6,11 @@ const command = {
   description: "Switch mode. Usage: /mode agent | build | chat",
   isEnabled: true,
   isHidden: false,
+  subcommands: [
+    { name: "chat", description: "Switch to chat mode" },
+    { name: "agent", description: "Switch to agent mode" },
+    { name: "build", description: "Switch to build mode" },
+  ],
   userFacingName() {
     return "mode";
   },

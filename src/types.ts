@@ -111,6 +111,10 @@ export type Command = {
   isEnabled: boolean;
   isHidden: boolean;
   aliases?: string[];
+  subcommands?: {
+    name: string;
+    description?: string;
+  }[];
   userFacingName(): string;
 } & (LocalCommand | PromptCommand);
 
