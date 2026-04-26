@@ -1,8 +1,7 @@
 import { Box, Text } from "ink";
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { getTheme } from "../utils/theme";
 import { useTerminalSize } from "../hooks/useTerminalSize";
-import { getModel } from "../utils/model";
 import { AsciiLogo } from "./AsciiLogo";
 import { lineVertical } from "../icons";
 
@@ -20,13 +19,6 @@ type Props = { level: number };
 export function Header({ level }: Props): React.ReactNode {
   const { columns } = useTerminalSize();
   const tip = TIPS[Math.floor(Math.random() * TIPS.length)];
-  const [modelLabel, setModelLabel] = useState("no model");
-
-  useEffect(() => {
-    getModel()
-      .then(({ modelId }) => setModelLabel(modelId))
-      .catch(() => {});
-  }, []);
 
   return (
     <Box
@@ -44,7 +36,7 @@ export function Header({ level }: Props): React.ReactNode {
         gap={1}
       >
         <Box flexDirection="column">
-          <Text color={getTheme().secondaryText}>{modelLabel}</Text>
+          <Text color={getTheme().secondaryText}>{process.cwd()}</Text>
         </Box>
         <Box flexDirection="column" alignItems="center" paddingX={1}>
           <Text color={getTheme().border} dimColor>
@@ -52,10 +44,10 @@ export function Header({ level }: Props): React.ReactNode {
           </Text>
         </Box>
         <Box flexDirection="column">
-          <Text color={getTheme().primary} bold>
+          <Text color={getTheme().text} dimColor bold>
             getting started
           </Text>
-          <Text color={getTheme().secondaryText} dimColor wrap="wrap">
+          <Text color={getTheme().secondaryText} wrap="wrap">
             {tip}
           </Text>
         </Box>

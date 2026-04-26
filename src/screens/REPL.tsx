@@ -373,7 +373,7 @@ export default function REPL(): JSX.Element {
       <Box minHeight={2}>{loading && <Spinner />}</Box>
 
       <Box flexDirection="column">
-        <Text color={getTheme().border}>{line.repeat(columns)}</Text>
+        <Text color={getTheme().secondaryBorder}>{line.repeat(columns)}</Text>
         <Box key="input-area">
           {bootstrap ? (
             <BootstrapWizard
@@ -419,7 +419,7 @@ export default function REPL(): JSX.Element {
             </Box>
           )}
         </Box>
-        <Text color={getTheme().border}>{line.repeat(columns)}</Text>
+        <Text color={getTheme().secondaryBorder}>{line.repeat(columns)}</Text>
         <CommandSuggestions query={value} selectedIndex={selectedIndex} />
         <StatusBar model={modelLabel} mode={mode} thinking={loading} />
       </Box>
