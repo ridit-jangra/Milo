@@ -160,7 +160,6 @@ export function BootstrapWizard({ onDone, columns }: Props): React.ReactNode {
 
   return (
     <Box flexDirection="column" paddingX={1}>
-      {/* completed steps */}
       {FIELDS.slice(0, step).map((f) => (
         <Box key={f} flexDirection="row" gap={2}>
           <Text color={theme.success}>{tick}</Text>
@@ -171,7 +170,6 @@ export function BootstrapWizard({ onDone, columns }: Props): React.ReactNode {
         </Box>
       ))}
 
-      {/* current question */}
       <Box flexDirection="column" marginTop={step > 0 ? 1 : 0}>
         <Text color={theme.primary}>{QUESTIONS[currentField]}</Text>
 
@@ -199,7 +197,11 @@ export function BootstrapWizard({ onDone, columns }: Props): React.ReactNode {
                 {arrowRight}
               </Text>
             </Box>
-            {/* invisible TextInput to capture enter + arrows */}
+
+            <Text color={theme.secondaryText} dimColor>
+              ← → to select · enter to confirm · esc to exit
+            </Text>
+
             <SelectorInput
               onLeft={() => handleSelectorKey("left")}
               onRight={() => handleSelectorKey("right")}
@@ -230,6 +232,8 @@ export function BootstrapWizard({ onDone, columns }: Props): React.ReactNode {
   );
 }
 
+import { useInput } from "ink";
+
 function SelectorInput({
   onLeft,
   onRight,
@@ -241,20 +245,23 @@ function SelectorInput({
   onSubmit: () => void;
   onEscape: () => void;
 }): React.ReactNode {
-  return (
-    <TextInput
-      value=""
-      onChange={() => {}}
-      onSubmit={onSubmit}
-      onExit={onEscape}
-      onEscape={onEscape}
-      columns={1}
-      cursorOffset={0}
-      onChangeCursorOffset={() => {}}
-      placeholder=""
-      focus={true}
-      onHistoryUp={onRight}
-      onHistoryDown={onLeft}
-    />
-  );
+  useInput((input, key) => {
+    if (key.leftArrow || key.upArrow) {
+      onLeft();
+    }
+
+    if (key.rightArrow || key.downArrow) {
+      onRight();
+    }
+
+    if (key.return) {
+      onSubmit();
+    }
+
+    if (key.escape) {
+      onEscape();
+    }
+  });
+
+  return null;
 }
