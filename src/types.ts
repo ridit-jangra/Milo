@@ -1,6 +1,7 @@
 import type { ToolSet } from "ai";
 import type { Session } from "./utils/session";
 import type { WizardMode } from "./hooks/useChat";
+import type React from "react";
 
 export type Mode = "chat" | "agent" | "build";
 
@@ -86,7 +87,11 @@ export type CommandContext = {
   setMode: (mode: Mode) => void;
   pushMessage: (text: string) => void;
   abortController: AbortController;
-  openWizard: (mode: WizardMode) => void;
+  // openWizard: (mode: WizardMode) => void;
+  renderComponent: (
+    component: React.ReactElement | null,
+    message?: string,
+  ) => void;
 };
 
 type LocalCommand = {

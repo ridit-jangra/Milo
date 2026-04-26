@@ -72,6 +72,8 @@ export default function REPL(): JSX.Element {
     decide,
     pendingPermission,
     pendingWizard,
+    PendingComponent,
+    closeComponent,
     closeWizard,
     abort,
   } = useChat();
@@ -90,7 +92,7 @@ export default function REPL(): JSX.Element {
       .then((m) => m.getModel())
       .then(({ modelId }) => setModelLabel(modelId))
       .catch(() => {});
-  }, [pendingWizard]);
+  }, [PendingComponent]);
 
   useEffect(() => {
     const onCommand = (cmd: string) => {
@@ -188,7 +190,7 @@ export default function REPL(): JSX.Element {
 
   useInput(
     (input, key) => {
-      if (pendingWizard) return;
+      if (PendingComponent) return;
       if (key.tab && value.startsWith("/")) {
         const matches = getMatchingCommands(value);
         if (matches.length === 0) return;
@@ -387,13 +389,13 @@ export default function REPL(): JSX.Element {
               permission={pendingPermission}
               onDecide={decide}
             />
-          ) : pendingWizard ? (
-            <ProviderWizard
-              key="wizard"
-              mode={pendingWizard}
-              onDone={closeWizard}
-            />
+          ) : PendingComponent ? (
+            PendingComponent
           ) : (
+            // key="wizard"
+            // mode={pendingWizard}
+            // onDone={closeWizard}
+
             <Box paddingX={1}>
               <Text color={getTheme().primary}>{pointer} </Text>
               <TextInput

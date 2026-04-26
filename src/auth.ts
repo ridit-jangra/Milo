@@ -1,6 +1,5 @@
-import { readFile, writeFile, mkdir } from "fs/promises";
+import { readFile, writeFile } from "fs/promises";
 import { existsSync } from "fs";
-import { join } from "path";
 import { supabase } from "./utils/supabase";
 import type { Session } from "@supabase/supabase-js";
 import { AUTH_FILE } from "./utils/env";

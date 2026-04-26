@@ -1,5 +1,5 @@
-import type { Command } from "../types";
-import { renderAchievements } from "../utils/achievements";
+import type { Command, CommandContext } from "../types";
+import { AchievementsView } from "../components/AchievementsView";
 
 const command = {
   type: "local",
@@ -11,8 +11,8 @@ const command = {
   userFacingName() {
     return "achievements";
   },
-  async call() {
-    return renderAchievements();
+  async call(args: string, { renderComponent }: CommandContext) {
+    renderComponent(<AchievementsView onDone={() => renderComponent(null)} />);
   },
 } satisfies Command;
 

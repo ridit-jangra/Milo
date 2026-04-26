@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { chatWithModel } from "../utils/chat";
 import { createAgent } from "../agents/agent";
 import { findCommand } from "../commands";
@@ -18,6 +18,8 @@ export function useChat(initialMode: Mode = "agent") {
   const [pendingPermission, setPendingPermission] =
     useState<PermissionRequest | null>(null);
   const [pendingWizard, setPendingWizard] = useState<WizardMode | null>(null);
+  const [PendingComponent, setPendingComponent] =
+    useState<React.ReactNode | null>(null);
   const modeRef = useRef<Mode>(initialMode);
   const sessionRef = useRef<Session | undefined>(undefined);
   const abortControllerRef = useRef<AbortController>(new AbortController());
@@ -69,6 +71,14 @@ export function useChat(initialMode: Mode = "agent") {
     setPendingPermission(null);
   }, []);
 
+  const closeComponent = useCallback(
+    (message?: string) => {
+      setPendingComponent(null);
+      if (message) pushMessage(message);
+    },
+    [pushMessage],
+  );
+
   const closeWizard = useCallback(
     (message?: string) => {
       setPendingWizard(null);
@@ -79,7 +89,13 @@ export function useChat(initialMode: Mode = "agent") {
 
   const submit = useCallback(
     async (input: string) => {
-      if (!input.trim() || loading || pendingPermission || pendingWizard)
+      if (
+        !input.trim() ||
+        loading ||
+        pendingPermission ||
+        pendingWizard ||
+        PendingComponent
+      )
         return;
 
       setMessages((prev) => [
@@ -102,7 +118,11 @@ export function useChat(initialMode: Mode = "agent") {
             setMode,
             pushMessage,
             abortController: abortControllerRef.current,
-            openWizard: setPendingWizard,
+            // openWizard: setPendingWizard,
+            renderComponent: (component, message) => {
+              setPendingComponent(component);
+              if (message) pushMessage(message);
+            },
           });
           if (result) pushMessage(result);
           setLoading(false);
@@ -210,6 +230,7 @@ export function useChat(initialMode: Mode = "agent") {
       loading,
       pendingPermission,
       pendingWizard,
+      PendingComponent,
       session,
       clearMessages,
       setMode,
@@ -230,7 +251,9 @@ export function useChat(initialMode: Mode = "agent") {
     decide,
     pushMessage,
     pendingWizard,
+    PendingComponent,
     closeWizard,
+    closeComponent,
     abort: () => {
       abortControllerRef.current.abort();
       setLoading(false);

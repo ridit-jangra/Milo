@@ -1,3 +1,4 @@
+import { ProviderWizard } from "../components/ProviderWizard";
 import type { Command } from "../types";
 import { setActiveProvider } from "../utils/providers";
 
@@ -10,25 +11,49 @@ const command = {
   userFacingName() {
     return "provider";
   },
-  async call(args: string, { openWizard }) {
+  async call(args: string, { renderComponent }) {
     const sub = args.trim().split(" ")[0];
 
     if (!sub || sub === "list") {
-      openWizard("list");
+      // openWizard("list");
+      renderComponent(
+        <ProviderWizard
+          mode="list"
+          onDone={(msg) => renderComponent(null, msg)}
+        />,
+      );
       return;
     }
     if (sub === "add") {
-      openWizard("add");
+      // openWizard("add");
+      renderComponent(
+        <ProviderWizard
+          mode="add"
+          onDone={(msg) => renderComponent(null, msg)}
+        />,
+      );
       return;
     }
     if (sub === "remove") {
-      openWizard("remove");
+      // openWizard("remove");
+      renderComponent(
+        <ProviderWizard
+          mode="remove"
+          onDone={(msg) => renderComponent(null, msg)}
+        />,
+      );
       return;
     }
     if (sub === "use") {
       const name = args.trim().split(" ")[1];
       if (!name) {
-        openWizard("list");
+        // openWizard("list");
+        renderComponent(
+          <ProviderWizard
+            mode="list"
+            onDone={(msg) => renderComponent(null, msg)}
+          />,
+        );
         return;
       }
       try {

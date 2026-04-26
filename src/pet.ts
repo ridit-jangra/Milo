@@ -6,7 +6,6 @@ import type { Pet } from "./types";
 import { getAccessToken, isLoggedIn } from "./auth";
 import { checkAchievements } from "./achievements";
 
-// XP per tool — sent to edge function, not calculated locally
 export const XP_PER_TOOL: Record<string, number> = {
   ThinkTool: 2,
   GrepTool: 5,
@@ -25,7 +24,6 @@ export const XP_PER_TOOL: Record<string, number> = {
   MemoryEditTool: 5,
 };
 
-// local-only pet state (cosmetic, not security-sensitive)
 type LocalPet = {
   hunger: number;
   mood: Pet["mood"];
@@ -36,7 +34,6 @@ const DEFAULT_LOCAL: LocalPet = {
   mood: "happy",
 };
 
-// default full pet (used when logged out)
 const DEFAULT_PET: Pet = {
   level: 1,
   xp: 0,
@@ -85,7 +82,6 @@ function calcMood(hunger: number): Pet["mood"] {
   return "happy";
 }
 
-// DB stats response from award_xp edge function
 type DbStats = {
   level: number;
   xp: number;
@@ -160,7 +156,6 @@ export function isCommandUnlocked(commandName: string, level: number): boolean {
   return level >= required;
 }
 
-// read pet — merges DB stats (if logged in) with local cosmetic state
 export async function readPet(): Promise<Pet> {
   const local = await readLocalPet();
 
@@ -210,13 +205,11 @@ export async function readPet(): Promise<Pet> {
 
 export function readPetSync(): Pet {
   const local = readLocalPetSync();
-  // sync version can't hit DB — returns local with defaults for stats
-  // good enough for spinner pool, stage color etc
+
   return { ...DEFAULT_PET, hunger: local.hunger, mood: local.mood };
 }
 
 export async function writePet(pet: Pet): Promise<void> {
-  // only persist cosmetic fields locally
   await writeLocalPet({ hunger: pet.hunger, mood: pet.mood });
 }
 
@@ -235,7 +228,6 @@ export async function awardXP(toolName: string): Promise<AwardXPResult> {
 
   await writeLocalPet({ hunger, mood });
 
-  // if not logged in — return defaults, no DB call
   if (!(await isLoggedIn())) {
     return {
       pet: { ...DEFAULT_PET, hunger, mood },
@@ -246,7 +238,6 @@ export async function awardXP(toolName: string): Promise<AwardXPResult> {
     };
   }
 
-  // award XP via edge function (server-side level up + coins)
   const stats = await callAwardXp(toolName);
 
   if (!stats) {
@@ -270,7 +261,6 @@ export async function awardXP(toolName: string): Promise<AwardXPResult> {
     mood,
   };
 
-  // check achievements based on fresh DB stats
   const newAchievements = await checkAchievements({
     totalTasks: stats.total_tasks,
     streak: stats.streak,
@@ -292,7 +282,6 @@ export async function feedPet(): Promise<Pet> {
   const updated: LocalPet = { hunger: 0, mood: "happy" };
   await writeLocalPet(updated);
 
-  // get current DB stats to return a full Pet
   const pet = await readPet();
   return { ...pet, hunger: 0, mood: "happy" };
 }
