@@ -1,62 +1,92 @@
 import React, { useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { getTheme } from "../utils/theme";
+import { useTerminalSize } from "../hooks/useTerminalSize";
 import { getAllAchievements, getUnlockedAchievements } from "../achievements";
 import { getBalance } from "../wallet";
 import { isLoggedIn } from "../auth";
-import { coin, diamond, star } from "../icons";
+import { coin } from "../icons";
 import type { Achievement, UserAchievement } from "../achievements";
+
+const PAGE_SIZE = 6;
+const ROW_WIDTH = 56;
 
 type AchievementRowProps = {
   achievement: Achievement;
   unlocked: boolean;
   unlockedAt?: string;
+  focused: boolean;
 };
 
 function AchievementRow({
   achievement,
   unlocked,
   unlockedAt,
+  focused,
 }: AchievementRowProps): React.ReactNode {
   const theme = getTheme();
 
+  const rewardStr = `+${achievement.reward}`;
+  // title: enough space for reward + coin icon + gaps
+  const titleMaxWidth = ROW_WIDTH - rewardStr.length - 6;
+  const title =
+    achievement.title.length > titleMaxWidth
+      ? achievement.title.slice(0, titleMaxWidth - 1) + "…"
+      : achievement.title;
+
+  // description: only shown when focused
+  const descMaxWidth = ROW_WIDTH - 3;
+  const desc =
+    achievement.description.length > descMaxWidth
+      ? achievement.description.slice(0, descMaxWidth - 1) + "…"
+      : achievement.description;
+
+  const statusIcon = unlocked ? "◆" : "◇";
+  const titleColor = focused
+    ? theme.primary
+    : unlocked
+      ? theme.text
+      : theme.secondaryText;
+
   return (
-    <Box flexDirection="column" marginBottom={1}>
-      <Box gap={2} alignItems="flex-start">
-        <Box width={3}>
-          <Text color={unlocked ? theme.success : theme.secondaryText}>
-            {unlocked ? "✦" : "○"}
+    <Box flexDirection="column" width={ROW_WIDTH + 4}>
+      {/* main row */}
+      <Box gap={1} alignItems="flex-start">
+        <Text color={focused ? theme.primary : theme.border}>
+          {focused ? "▸" : " "}
+        </Text>
+        <Text color={unlocked ? theme.success : theme.border}>
+          {statusIcon}
+        </Text>
+        <Box flexGrow={1} width={titleMaxWidth}>
+          <Text color={titleColor} bold={focused}>
+            {title}
           </Text>
         </Box>
-
-        <Box flexGrow={1} justifyContent="space-between">
-          <Box gap={1}>
-            <Text
-              color={unlocked ? theme.text : theme.secondaryText}
-              bold={unlocked}
-            >
-              {achievement.title}
-            </Text>
-            {unlocked && unlockedAt && (
-              <Text color={theme.secondaryText} dimColor>
-                · {new Date(unlockedAt).toLocaleDateString()}
-              </Text>
-            )}
-          </Box>
-          <Text
-            color={unlocked ? theme.warning : theme.secondaryText}
-            dimColor={!unlocked}
-          >
-            +{achievement.reward} {coin}
+        {unlocked && unlockedAt && (
+          <Text color={theme.border} dimColor>
+            {new Date(unlockedAt).toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+            })}
           </Text>
-        </Box>
-      </Box>
-
-      <Box marginLeft={5}>
-        <Text color={theme.secondaryText} dimColor>
-          {achievement.description}
+        )}
+        <Text
+          color={unlocked ? theme.money : theme.border}
+          dimColor={!unlocked}
+        >
+          {rewardStr} {coin}
         </Text>
       </Box>
+
+      {/* description: only when focused to reduce noise */}
+      {focused && (
+        <Box marginLeft={3}>
+          <Text color={theme.secondaryText} dimColor>
+            {desc}
+          </Text>
+        </Box>
+      )}
     </Box>
   );
 }
@@ -73,6 +103,7 @@ export function AchievementsView({
   const [balance, setBalance] = useState<number>(0);
   const [loggedIn, setLoggedIn] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
+  const [cursor, setCursor] = useState(0);
 
   useEffect(() => {
     async function load() {
@@ -80,7 +111,6 @@ export function AchievementsView({
         isLoggedIn(),
         getAllAchievements(),
       ]);
-
       setLoggedIn(login);
       setAll(achievements);
 
@@ -99,75 +129,125 @@ export function AchievementsView({
     load().catch(() => setLoading(false));
   }, []);
 
-  useInput((input, key) => {
-    if (key.escape) {
-      onDone();
-    }
-  });
-
   const unlockedMap = new Map(
     unlocked.map((u) => [u.achievement_id, u.unlocked_at]),
   );
 
+  const sorted = [...all].sort((a, b) => {
+    return (unlockedMap.has(b.id) ? 1 : 0) - (unlockedMap.has(a.id) ? 1 : 0);
+  });
+
+  useInput((_input, key) => {
+    if (key.escape) {
+      onDone();
+      return;
+    }
+    if (key.upArrow) setCursor((c) => Math.max(0, c - 1));
+    if (key.downArrow) setCursor((c) => Math.min(sorted.length - 1, c + 1));
+  });
+
   const unlockedCount = unlockedMap.size;
   const total = all.length;
-  const progressFilled = Math.floor((unlockedCount / total) * 20);
+  const progressFilled =
+    total > 0 ? Math.round((unlockedCount / total) * 16) : 0;
   const progressBar =
-    "█".repeat(progressFilled) + "░".repeat(20 - progressFilled);
+    "█".repeat(progressFilled) + "░".repeat(16 - progressFilled);
+
+  const windowStart = Math.max(
+    0,
+    Math.min(cursor - Math.floor(PAGE_SIZE / 2), sorted.length - PAGE_SIZE),
+  );
+  const windowEnd = Math.min(sorted.length, windowStart + PAGE_SIZE);
+  const visible = sorted.slice(windowStart, windowEnd);
+  const canScrollUp = windowStart > 0;
+  const canScrollDown = windowEnd < sorted.length;
+
+  const divider = "─".repeat(ROW_WIDTH + 4);
 
   return (
     <Box flexDirection="column" marginY={1} paddingX={1}>
+      {/* header: title + progress + balance on one clean line */}
       <Box marginBottom={1} gap={2} alignItems="center">
         <Text color={theme.primary} bold>
-          🐾 Achievements
+          Achievements
         </Text>
         <Text color={theme.secondaryText}>
           {unlockedCount}/{total}
         </Text>
         <Text color={theme.warning}>{progressBar}</Text>
         {loggedIn && (
-          <Box gap={1}>
-            <Text color={theme.secondaryText}>{diamond}</Text>
-            <Text color={theme.warning}>
-              {balance} {coin}
-            </Text>
-          </Box>
+          <Text color={theme.money}>
+            {balance} {coin}
+          </Text>
         )}
       </Box>
 
-      {!loggedIn && (
-        <Box marginY={1} paddingX={1}>
+      <Text color={theme.border}>{divider}</Text>
+
+      {loading && (
+        <Box marginY={1}>
+          <Text color={theme.secondaryText}>loading…</Text>
+        </Box>
+      )}
+
+      {!loading && !loggedIn && (
+        <Box marginY={1}>
           <Text color={theme.secondaryText}>
-            {star} login to track achievements and earn purr-coins · /login{" "}
-            {"<email>"}
+            /login {"<email>"} to track achievements and earn coins
           </Text>
         </Box>
       )}
 
-      <Box flexDirection="column" marginTop={1}>
-        {all
-          .sort((a, b) => {
-            const aUnlocked = unlockedMap.has(a.id) ? 1 : 0;
-            const bUnlocked = unlockedMap.has(b.id) ? 1 : 0;
-            return bUnlocked - aUnlocked;
-          })
-          .map((a) => (
+      {/* scroll hint — subdued, no arrow icons */}
+      {canScrollUp && (
+        <Box marginBottom={1}>
+          <Text color={theme.border} dimColor>
+            {"  "}↑ {windowStart} more
+          </Text>
+        </Box>
+      )}
+
+      {!loading && (
+        <Box flexDirection="column" gap={0}>
+          {visible.map((a, i) => (
             <AchievementRow
               key={a.id}
               achievement={a}
               unlocked={unlockedMap.has(a.id)}
               unlockedAt={unlockedMap.get(a.id)}
+              focused={windowStart + i === cursor}
             />
           ))}
-      </Box>
+        </Box>
+      )}
 
-      {unlockedCount === total && (
+      {canScrollDown && (
         <Box marginTop={1}>
-          <Text color={theme.success}>
-            🎉 all done bestie. you ate and left no crumbs.
+          <Text color={theme.border} dimColor>
+            {"  "}↓ {sorted.length - windowEnd} more
           </Text>
         </Box>
       )}
+
+      <Text color={theme.border}>{divider}</Text>
+
+      {!loading && unlockedCount === total && total > 0 && (
+        <Box marginTop={1}>
+          <Text color={theme.success}>
+            🎉 All done. You ate and left no crumbs.
+          </Text>
+        </Box>
+      )}
+
+      {/* minimal footer hints */}
+      <Box marginTop={1} gap={3}>
+        <Text color={theme.border} dimColor>
+          ↑↓ navigate
+        </Text>
+        <Text color={theme.border} dimColor>
+          esc close
+        </Text>
+      </Box>
     </Box>
   );
 }

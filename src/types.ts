@@ -45,6 +45,7 @@ export interface Theme {
   suggestion: string;
   success: string;
   error: string;
+  money: string;
   warning: string;
   diff: {
     added: string;

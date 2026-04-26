@@ -3,7 +3,8 @@ import { readFileSync } from "fs";
 import { dirname } from "path";
 import { EDGE_BASE, PET_FILE } from "./utils/env";
 import type { Pet } from "./types";
-import { getAccessToken, isLoggedIn } from "./auth";
+import { getAccessToken, getUserId, isLoggedIn } from "./auth";
+import { supabase } from "./utils/supabase";
 import { checkAchievements } from "./achievements";
 
 export const XP_PER_TOOL: Record<string, number> = {
@@ -158,35 +159,21 @@ export function isCommandUnlocked(commandName: string, level: number): boolean {
 
 export async function readPet(): Promise<Pet> {
   const local = await readLocalPet();
+  const fallback = { ...DEFAULT_PET, hunger: local.hunger, mood: local.mood };
 
-  if (!(await isLoggedIn())) {
-    return { ...DEFAULT_PET, hunger: local.hunger, mood: local.mood };
-  }
-
-  const token = await getAccessToken();
-  if (!token) return { ...DEFAULT_PET, hunger: local.hunger, mood: local.mood };
+  if (!(await isLoggedIn())) return fallback;
 
   try {
-    const { createClient } = await import("@supabase/supabase-js");
-    const supabase = createClient(
-      "https://cowlzmdeufmdkksovsis.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvd2x6bWRldWZtZGtrc292c2lzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNzkwMjIsImV4cCI6MjA5Mjc1NTAyMn0.saByYOe0VpjwQ9sOXtFU0KcNrTalcLpRW9rFKu6SOLA",
-    );
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser(token);
-    if (!user)
-      return { ...DEFAULT_PET, hunger: local.hunger, mood: local.mood };
+    const userId = await getUserId();
+    if (!userId) return fallback;
 
     const { data } = await supabase
       .from("user_stats")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .single();
 
-    if (!data)
-      return { ...DEFAULT_PET, hunger: local.hunger, mood: local.mood };
+    if (!data) return fallback;
 
     return {
       level: data.level,
@@ -199,7 +186,7 @@ export async function readPet(): Promise<Pet> {
       mood: local.mood,
     };
   } catch {
-    return { ...DEFAULT_PET, hunger: local.hunger, mood: local.mood };
+    return fallback;
   }
 }
 
@@ -278,6 +265,7 @@ export async function awardXP(toolName: string): Promise<AwardXPResult> {
 }
 
 export async function feedPet(): Promise<Pet> {
+  const local = await readLocalPet();
   const updated: LocalPet = { hunger: 0, mood: "happy" };
   await writeLocalPet(updated);
 

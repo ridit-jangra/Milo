@@ -109,12 +109,12 @@ export function StatusBar({
             </Box>
             <Box>
               <Text color={getTheme().warning}>{diamond}</Text>
-              <Text color={getTheme().success}>{xpPart}</Text>
+              <Text color={getTheme().secondary}>{xpPart}</Text>
             </Box>
             {coins !== null && (
               <Box>
-                <Text color={getTheme().warning}> {coin} </Text>
-                <Text color={getTheme().warning}>{coins}</Text>
+                <Text color={getTheme().money}>{coin}</Text>
+                <Text color={getTheme().money}>{coins}</Text>
               </Box>
             )}
           </>
