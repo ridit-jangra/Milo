@@ -72,7 +72,7 @@ export function AchievementsView({
   const [unlocked, setUnlocked] = useState<UserAchievement[]>([]);
   const [balance, setBalance] = useState<number>(0);
   const [loggedIn, setLoggedIn] = useState<boolean>(false);
-  // const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
@@ -93,10 +93,10 @@ export function AchievementsView({
         setBalance(bal);
       }
 
-      // setLoading(false);
+      setLoading(false);
     }
 
-    // load().catch(() => setLoading(false));
+    load().catch(() => setLoading(false));
   }, []);
 
   useInput((input, key) => {
