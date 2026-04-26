@@ -1,4 +1,4 @@
-import type { Command, CommandContext } from "../types";
+import type { Command } from "../types";
 import { sendMagicLink, verifyOtp, getAuthState } from "../auth";
 
 let pendingEmail: string | null = null;

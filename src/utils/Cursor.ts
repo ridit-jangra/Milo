@@ -95,36 +95,41 @@ export class Cursor {
   }
 
   nextWord(): Cursor {
-    let nextCursor: Cursor = this;
+    let current = new Cursor(this.measuredText, this.offset, this.selection);
 
-    while (nextCursor.isOverWordChar() && !nextCursor.isAtEnd()) {
-      nextCursor = nextCursor.right();
+    while (current.isOverWordChar() && !current.isAtEnd()) {
+      current = current.right();
     }
 
-    while (!nextCursor.isOverWordChar() && !nextCursor.isAtEnd()) {
-      nextCursor = nextCursor.right();
+    while (!current.isOverWordChar() && !current.isAtEnd()) {
+      current = current.right();
     }
-    return nextCursor;
+
+    return current;
   }
 
   prevWord(): Cursor {
-    let cursor: Cursor = this;
+    let current: Cursor = new Cursor(
+      this.measuredText,
+      this.offset,
+      this.selection,
+    );
 
-    if (!cursor.left().isOverWordChar()) {
-      cursor = cursor.left();
+    if (!current.left().isOverWordChar()) {
+      current = current.left();
     }
 
-    while (!cursor.isOverWordChar() && !cursor.isAtStart()) {
-      cursor = cursor.left();
+    while (!current.isOverWordChar() && !current.isAtStart()) {
+      current = current.left();
     }
 
-    if (cursor.isOverWordChar()) {
-      while (cursor.left().isOverWordChar() && !cursor.isAtStart()) {
-        cursor = cursor.left();
+    if (current.isOverWordChar()) {
+      while (current.left().isOverWordChar() && !current.isAtStart()) {
+        current = current.left();
       }
     }
 
-    return cursor;
+    return current;
   }
 
   private modifyText(end: Cursor, insertString: string = ""): Cursor {

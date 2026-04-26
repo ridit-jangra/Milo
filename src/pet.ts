@@ -278,7 +278,6 @@ export async function awardXP(toolName: string): Promise<AwardXPResult> {
 }
 
 export async function feedPet(): Promise<Pet> {
-  const local = await readLocalPet();
   const updated: LocalPet = { hunger: 0, mood: "happy" };
   await writeLocalPet(updated);
 

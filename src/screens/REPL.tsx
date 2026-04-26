@@ -72,8 +72,6 @@ export default function REPL(): JSX.Element {
     pendingPermission,
     pendingWizard,
     PendingComponent,
-    closeComponent,
-    closeWizard,
     abort,
   } = useChat();
 
