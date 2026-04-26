@@ -24,7 +24,6 @@ export function getShortcuts(): Shortcut[] {
   return registry;
 }
 
-// register built-in shortcuts
 registerShortcut({
   key: "t",
   ctrl: true,

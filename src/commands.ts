@@ -10,6 +10,11 @@ import roast from "./commands/roast";
 import vibe from "./commands/vibe";
 import crimes from "./commands/crimes";
 import provider from "./commands/provider";
+import leaderboard from "./commands/leaderboard";
+import achievements from "./commands/achievements";
+import login from "./commands/login";
+import logout from "./commands/logout";
+import whoami from "./commands/whoami";
 
 const COMMANDS: Command[] = [
   clear,
@@ -23,6 +28,11 @@ const COMMANDS: Command[] = [
   vibe,
   crimes,
   provider,
+  leaderboard,
+  achievements,
+  login,
+  logout,
+  whoami,
 ];
 
 export function getCommands(): Command[] {

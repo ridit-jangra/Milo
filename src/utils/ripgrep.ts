@@ -73,8 +73,7 @@ async function grepWithRg(
         const results: GrepMatch[] = [];
         for (const line of stdout.split("\n").filter(Boolean)) {
           const trimmed = line.replace(/\r$/, "");
-          // Match file:linenum:content — greedily capture file path (handles Windows drive letters like E:\)
-          // then anchor on the numeric line number to avoid ambiguity with colons in file paths or content
+
           const match = trimmed.match(/^(.+):(\d+):(.*)$/);
           if (!match) continue;
           const [, file, lineNum, content] = match;

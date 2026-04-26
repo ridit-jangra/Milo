@@ -25,7 +25,7 @@ export const FileReadTool = tool({
       let lines = (await readFile(absolutePath, "utf-8")).split("\n");
       const totalLines = lines.length;
 
-      const start = line_start ? line_start - 1 : 0; // convert to 0-indexed
+      const start = line_start ? line_start - 1 : 0;
       const end = line_end ?? lines.length;
 
       lines = lines.slice(start, end);

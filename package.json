@@ -47,6 +47,7 @@
     "@ai-sdk/groq": "^3.0.33",
     "@ai-sdk/openai": "^3.0.50",
     "@openrouter/ai-sdk-provider": "^2.5.0",
+    "@supabase/supabase-js": "^2.104.1",
     "@vscode/ripgrep": "^1.17.1",
     "ai": "^6.0.145",
     "ai-sdk-ollama": "^3.8.2",

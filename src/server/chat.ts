@@ -6,7 +6,7 @@ import { onPermissionRequest, allowInSession } from "../permissions";
 import { getDaemonSession, updateDaemonSession } from "./sessions";
 import { requestPermission as serverRequestPermission } from "./permissions";
 
-// SSE helper
+
 function sseWrite(res: ServerResponse, data: object) {
   res.write(`data: ${JSON.stringify(data)}\n\n`);
 }
@@ -23,7 +23,7 @@ export async function handleChat(
     return;
   }
 
-  // parse body
+  
   let body = "";
   await new Promise<void>((resolve) => {
     req.on("data", (c) => (body += c));
@@ -37,7 +37,7 @@ export async function handleChat(
     return;
   }
 
-  // SSE headers
+  
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache",
@@ -57,7 +57,7 @@ export async function handleChat(
     toolName: string;
     input: unknown;
   }) => {
-    // Deregister while awaiting so concurrent sessions/requests don't also handle this.
+    
     removePermissionListener();
 
     const permId = randomUUID();
@@ -80,7 +80,7 @@ export async function handleChat(
     if (decision === "allow_session") allowInSession(toolName);
     resolve(decision);
 
-    // Re-register so the next tool call in this session can still be handled.
+    
     removePermissionListener = onPermissionRequest(permissionHandler);
   };
 

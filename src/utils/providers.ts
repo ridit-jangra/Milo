@@ -75,7 +75,7 @@ export async function addProvider(config: ProviderConfig): Promise<void> {
   } else {
     data.providers.push(config);
   }
-  // auto-set as active if it's the first one
+
   if (data.providers.length === 1) {
     data.active = config.name;
   }

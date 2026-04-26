@@ -148,10 +148,6 @@ export function BootstrapWizard({ onDone, columns }: Props): React.ReactNode {
     advance({ [currentField]: opts[currentSelectorIndex]! });
   }
 
-  // For selector fields we need raw key handling — wire into TextInput's onSubmit
-  // and intercept arrow keys via onChange hack. Instead, render a dummy TextInput
-  // that only listens for enter, and overlay the selector UI above it.
-
   if (saving) {
     return (
       <Box paddingX={1}>
@@ -234,7 +230,6 @@ export function BootstrapWizard({ onDone, columns }: Props): React.ReactNode {
   );
 }
 
-// Thin wrapper that captures arrow keys + enter for selector fields
 function SelectorInput({
   onLeft,
   onRight,

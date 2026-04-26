@@ -1,10 +1,13 @@
 import { readFile, writeFile, mkdir } from "fs/promises";
 import { readFileSync } from "fs";
 import { dirname } from "path";
-import { PET_FILE } from "./utils/env";
+import { EDGE_BASE, PET_FILE } from "./utils/env";
 import type { Pet } from "./types";
+import { getAccessToken, isLoggedIn } from "./auth";
+import { checkAchievements } from "./achievements";
 
-const XP_PER_TOOL: Record<string, number> = {
+// XP per tool — sent to edge function, not calculated locally
+export const XP_PER_TOOL: Record<string, number> = {
   ThinkTool: 2,
   GrepTool: 5,
   GlobTool: 5,
@@ -22,33 +25,100 @@ const XP_PER_TOOL: Record<string, number> = {
   MemoryEditTool: 5,
 };
 
-const XP_TO_NEXT_BASE = 100;
-const XP_SCALING = 1.4;
+// local-only pet state (cosmetic, not security-sensitive)
+type LocalPet = {
+  hunger: number;
+  mood: Pet["mood"];
+};
 
-function calcXpToNext(level: number): number {
-  return Math.floor(XP_TO_NEXT_BASE * Math.pow(XP_SCALING, level - 1));
-}
+const DEFAULT_LOCAL: LocalPet = {
+  hunger: 0,
+  mood: "happy",
+};
 
-function calcMood(pet: Pet): Pet["mood"] {
-  if (pet.hunger >= 80) return "sad";
-  if (pet.hunger >= 50) return "sleepy";
-  return "happy";
-}
-
-function todayString(): string {
-  return new Date().toISOString().split("T")[0]!;
-}
-
+// default full pet (used when logged out)
 const DEFAULT_PET: Pet = {
   level: 1,
   xp: 0,
-  xpToNext: XP_TO_NEXT_BASE,
+  xpToNext: 100,
   mood: "happy",
   hunger: 0,
   streak: 1,
   lastActive: new Date(),
   totalTasks: 0,
 };
+
+async function readLocalPet(): Promise<LocalPet> {
+  try {
+    const raw = await readFile(PET_FILE, "utf-8");
+    const parsed = JSON.parse(raw);
+    return {
+      hunger: parsed.hunger ?? 0,
+      mood: parsed.mood ?? "happy",
+    };
+  } catch {
+    return { ...DEFAULT_LOCAL };
+  }
+}
+
+function readLocalPetSync(): LocalPet {
+  try {
+    const raw = readFileSync(PET_FILE, "utf-8");
+    const parsed = JSON.parse(raw);
+    return {
+      hunger: parsed.hunger ?? 0,
+      mood: parsed.mood ?? "happy",
+    };
+  } catch {
+    return { ...DEFAULT_LOCAL };
+  }
+}
+
+async function writeLocalPet(local: LocalPet): Promise<void> {
+  await mkdir(dirname(PET_FILE), { recursive: true });
+  await writeFile(PET_FILE, JSON.stringify(local, null, 2), "utf-8");
+}
+
+function calcMood(hunger: number): Pet["mood"] {
+  if (hunger >= 80) return "sad";
+  if (hunger >= 50) return "sleepy";
+  return "happy";
+}
+
+// DB stats response from award_xp edge function
+type DbStats = {
+  level: number;
+  xp: number;
+  xp_to_next: number;
+  streak: number;
+  total_tasks: number;
+  leveled_up: boolean;
+  old_level: number;
+  coins_earned: number;
+};
+
+async function callAwardXp(toolName: string): Promise<DbStats | null> {
+  const token = await getAccessToken();
+  if (!token) return null;
+
+  const xpAmount = XP_PER_TOOL[toolName] ?? 1;
+
+  try {
+    const res = await fetch(`${EDGE_BASE}/award-xp`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ toolName, xpAmount }),
+    });
+
+    if (!res.ok) return null;
+    return (await res.json()) as DbStats;
+  } catch {
+    return null;
+  }
+}
 
 export const LEVEL_FLAVOR: Record<number, string> = {
   1: "still a kitten 🐱",
@@ -90,101 +160,141 @@ export function isCommandUnlocked(commandName: string, level: number): boolean {
   return level >= required;
 }
 
-export function readPetSync(): Pet {
+// read pet — merges DB stats (if logged in) with local cosmetic state
+export async function readPet(): Promise<Pet> {
+  const local = await readLocalPet();
+
+  if (!(await isLoggedIn())) {
+    return { ...DEFAULT_PET, hunger: local.hunger, mood: local.mood };
+  }
+
+  const token = await getAccessToken();
+  if (!token) return { ...DEFAULT_PET, hunger: local.hunger, mood: local.mood };
+
   try {
-    const raw = readFileSync(PET_FILE, "utf-8");
-    const parsed = JSON.parse(raw);
+    const { createClient } = await import("@supabase/supabase-js");
+    const supabase = createClient(
+      "https://cowlzmdeufmdkksovsis.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvd2x6bWRldWZtZGtrc292c2lzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNzkwMjIsImV4cCI6MjA5Mjc1NTAyMn0.saByYOe0VpjwQ9sOXtFU0KcNrTalcLpRW9rFKu6SOLA",
+    );
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser(token);
+    if (!user)
+      return { ...DEFAULT_PET, hunger: local.hunger, mood: local.mood };
+
+    const { data } = await supabase
+      .from("user_stats")
+      .select("*")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!data)
+      return { ...DEFAULT_PET, hunger: local.hunger, mood: local.mood };
+
     return {
-      ...DEFAULT_PET,
-      ...parsed,
-      lastActive: new Date(parsed.lastActive),
+      level: data.level,
+      xp: data.xp,
+      xpToNext: data.xp_to_next,
+      streak: data.streak,
+      totalTasks: data.total_tasks,
+      lastActive: new Date(data.last_active),
+      hunger: local.hunger,
+      mood: local.mood,
     };
   } catch {
-    return { ...DEFAULT_PET };
+    return { ...DEFAULT_PET, hunger: local.hunger, mood: local.mood };
   }
 }
 
-export async function readPet(): Promise<Pet> {
-  try {
-    const raw = await readFile(PET_FILE, "utf-8");
-    const parsed = JSON.parse(raw);
-    return {
-      ...DEFAULT_PET,
-      ...parsed,
-      lastActive: new Date(parsed.lastActive),
-    };
-  } catch {
-    return { ...DEFAULT_PET };
-  }
+export function readPetSync(): Pet {
+  const local = readLocalPetSync();
+  // sync version can't hit DB — returns local with defaults for stats
+  // good enough for spinner pool, stage color etc
+  return { ...DEFAULT_PET, hunger: local.hunger, mood: local.mood };
 }
 
 export async function writePet(pet: Pet): Promise<void> {
-  await mkdir(dirname(PET_FILE), { recursive: true });
-  await writeFile(PET_FILE, JSON.stringify(pet, null, 2), "utf-8");
+  // only persist cosmetic fields locally
+  await writeLocalPet({ hunger: pet.hunger, mood: pet.mood });
 }
 
 export type AwardXPResult = {
   pet: Pet;
   leveledUp: boolean;
   oldLevel: number;
+  coinsEarned: number;
+  newAchievements: string[];
 };
 
 export async function awardXP(toolName: string): Promise<AwardXPResult> {
-  const pet = await readPet();
-  const oldLevel = pet.level;
-  const xp = XP_PER_TOOL[toolName] ?? 1;
+  const local = await readLocalPet();
+  const hunger = Math.min(100, local.hunger + 1);
+  const mood = calcMood(hunger);
 
-  const today = todayString();
-  const lastActive = pet.lastActive.toISOString().split("T")[0]!;
-  const yesterday = new Date(Date.now() - 86400000)
-    .toISOString()
-    .split("T")[0]!;
-  const streak =
-    lastActive === today
-      ? pet.streak
-      : lastActive === yesterday
-        ? pet.streak + 1
-        : 1;
+  await writeLocalPet({ hunger, mood });
 
-  const hunger = Math.min(100, pet.hunger + 1);
-
-  let newXp = pet.xp + xp;
-  let level = pet.level;
-  let xpToNext = pet.xpToNext;
-
-  while (newXp >= xpToNext) {
-    newXp -= xpToNext;
-    level++;
-    xpToNext = calcXpToNext(level);
+  // if not logged in — return defaults, no DB call
+  if (!(await isLoggedIn())) {
+    return {
+      pet: { ...DEFAULT_PET, hunger, mood },
+      leveledUp: false,
+      oldLevel: 1,
+      coinsEarned: 0,
+      newAchievements: [],
+    };
   }
 
-  const updated: Pet = {
-    level,
-    xp: newXp,
-    xpToNext,
-    hunger,
-    streak,
+  // award XP via edge function (server-side level up + coins)
+  const stats = await callAwardXp(toolName);
+
+  if (!stats) {
+    return {
+      pet: { ...DEFAULT_PET, hunger, mood },
+      leveledUp: false,
+      oldLevel: 1,
+      coinsEarned: 0,
+      newAchievements: [],
+    };
+  }
+
+  const pet: Pet = {
+    level: stats.level,
+    xp: stats.xp,
+    xpToNext: stats.xp_to_next,
+    streak: stats.streak,
+    totalTasks: stats.total_tasks,
     lastActive: new Date(),
-    totalTasks: pet.totalTasks + 1,
-    mood: "happy",
+    hunger,
+    mood,
   };
 
-  updated.mood = calcMood(updated);
-  await writePet(updated);
+  // check achievements based on fresh DB stats
+  const newAchievements = await checkAchievements({
+    totalTasks: stats.total_tasks,
+    streak: stats.streak,
+    level: stats.level,
+    isFirstRun: stats.total_tasks === 1,
+  });
 
-  return { pet: updated, leveledUp: level > oldLevel, oldLevel };
+  return {
+    pet,
+    leveledUp: stats.leveled_up,
+    oldLevel: stats.old_level,
+    coinsEarned: stats.coins_earned,
+    newAchievements,
+  };
 }
 
 export async function feedPet(): Promise<Pet> {
+  const local = await readLocalPet();
+  const updated: LocalPet = { hunger: 0, mood: "happy" };
+  await writeLocalPet(updated);
+
+  // get current DB stats to return a full Pet
   const pet = await readPet();
-  const updated: Pet = {
-    ...pet,
-    hunger: 0,
-    mood: "happy",
-    lastActive: new Date(),
-  };
-  await writePet(updated);
-  return updated;
+  return { ...pet, hunger: 0, mood: "happy" };
 }
 
 export function getMoodEmoji(mood: Pet["mood"]): string {

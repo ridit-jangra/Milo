@@ -17,7 +17,7 @@ export const WebFetchTool = tool({
         signal: AbortSignal.timeout(10000),
       });
       const html = await res.text();
-      // strip tags, keep text
+
       const text = html
         .replace(/<script[\s\S]*?<\/script>/gi, "")
         .replace(/<style[\s\S]*?<\/style>/gi, "")

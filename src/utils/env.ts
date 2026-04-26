@@ -20,3 +20,7 @@ export const CONFIG_FILE = join(MILO_BASE_DIR, "config.json");
 export const BOOTSTRAP_FILE = join(MILO_BASE_DIR, "bootstrap.txt");
 export const HUMAN_MEMORY_FILE = join(MEMORY_DIR, "human-memory.md");
 export const GITHUB_REPOS_FILE = join(MEMORY_DIR, "github-repos.md");
+export const AUTH_FILE = join(MILO_BASE_DIR, "auth.json");
+
+export const EDGE_BASE =
+  "https://cowlzmdeufmdkksovsis.supabase.co/functions/v1";

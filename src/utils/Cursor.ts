@@ -13,7 +13,6 @@ export class Cursor {
     offset: number = 0,
     readonly selection: number = 0,
   ) {
-    // it's ok for the cursor to be 1 char beyond the end of the string
     this.offset = Math.max(0, Math.min(this.measuredText.text.length, offset));
   }
 
@@ -23,7 +22,6 @@ export class Cursor {
     offset: number = 0,
     selection: number = 0,
   ): Cursor {
-    // make MeasuredText on less than columns width, to account for cursor
     return new Cursor(new MeasuredText(text, columns - 1), offset, selection);
   }
 
@@ -37,7 +35,7 @@ export class Cursor {
           const lastSixStart = Math.max(0, text.length - 6);
           displayText = mask.repeat(lastSixStart) + text.slice(lastSixStart);
         }
-        // looking for the line with the cursor
+
         if (line != currentLine) return displayText.trimEnd();
 
         return (
@@ -97,13 +95,12 @@ export class Cursor {
   }
 
   nextWord(): Cursor {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
     let nextCursor: Cursor = this;
-    // If we're on a word, move to the next non-word
+
     while (nextCursor.isOverWordChar() && !nextCursor.isAtEnd()) {
       nextCursor = nextCursor.right();
     }
-    // now move to the next word char
+
     while (!nextCursor.isOverWordChar() && !nextCursor.isAtEnd()) {
       nextCursor = nextCursor.right();
     }
@@ -111,20 +108,16 @@ export class Cursor {
   }
 
   prevWord(): Cursor {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
     let cursor: Cursor = this;
 
-    // if we are already at the beginning of a word, step off it
     if (!cursor.left().isOverWordChar()) {
       cursor = cursor.left();
     }
 
-    // Move left over any non-word characters
     while (!cursor.isOverWordChar() && !cursor.isAtStart()) {
       cursor = cursor.left();
     }
 
-    // If we're over a word character, move to the start of this word
     if (cursor.isOverWordChar()) {
       while (cursor.left().isOverWordChar() && !cursor.isAtStart()) {
         cursor = cursor.left();
@@ -174,7 +167,6 @@ export class Cursor {
   }
 
   deleteToLineEnd(): Cursor {
-    // If cursor is on a newline character, delete just that character
     if (this.text[this.offset] === "\n") {
       return this.modifyText(this.right());
     }
@@ -276,7 +268,6 @@ export class MeasuredText {
         i == 0 || (startOffset > 0 && this.text[startOffset - 1] === "\n");
 
       if (text.length === 0) {
-        // For blank lines, find the next newline character after the last one
         lastNewLinePos = this.text.indexOf("\n", lastNewLinePos + 1);
 
         if (lastNewLinePos !== -1) {
@@ -292,7 +283,6 @@ export class MeasuredText {
             ),
           );
         } else {
-          // If we can't find another newline, this must be the end of text
           const startOffset = this.text.length;
           wrappedLines.push(
             new WrappedLine(
@@ -304,7 +294,6 @@ export class MeasuredText {
           );
         }
       } else {
-        // For non-blank lines
         const startOffset = this.text.indexOf(text, searchOffset);
         if (startOffset === -1) {
           throw new Error("Failed to find wrapped line in original text");
@@ -312,7 +301,6 @@ export class MeasuredText {
 
         searchOffset = startOffset + text.length;
 
-        // Check if this line ends with a newline in the original text
         const potentialNewlinePos = startOffset + text.length;
         const endsWithNewline =
           potentialNewlinePos < this.text.length &&
@@ -352,14 +340,12 @@ export class MeasuredText {
     const wrappedLine = this.getLine(position.line);
     const startOffsetPlusColumn = wrappedLine.startOffset + position.column;
 
-    // Handle blank lines specially
     if (wrappedLine.text.length === 0 && wrappedLine.endsWithNewline) {
       return wrappedLine.startOffset;
     }
 
-    // For normal lines
     const lineEnd = wrappedLine.startOffset + wrappedLine.text.length;
-    // Add 1 only if this line ends with a newline
+
     const maxOffset = wrappedLine.endsWithNewline ? lineEnd + 1 : lineEnd;
 
     return Math.min(startOffsetPlusColumn, maxOffset);
@@ -401,7 +387,6 @@ export class MeasuredText {
       }
     }
 
-    // If we're past the last character, return the end of the last line
     const line = lines.length - 1;
     return {
       line,

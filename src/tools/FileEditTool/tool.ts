@@ -15,7 +15,6 @@ export const FileEditTool = tool({
   title: "EditFile",
   execute: async ({ path, old_string, new_string }) => {
     try {
-      // Find a single exact occurrence of old_string
       const content = await readFile(path, "utf-8");
       const normalizedContent = content.replace(/\r\n/g, "\n");
       const normalizedOld = old_string.replace(/\r\n/g, "\n");
@@ -36,7 +35,6 @@ export const FileEditTool = tool({
         normalizedNew +
         normalizedContent.slice(firstIdx + normalizedOld.length);
 
-      // preserve original line endings when writing back
       const finalContent = content.includes("\r\n")
         ? newContent.replace(/\n/g, "\r\n")
         : newContent;
