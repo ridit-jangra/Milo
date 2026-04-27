@@ -52,19 +52,24 @@ Switch modes with `ctrl+t` or `/mode agent | chat`.
 
 ## Commands
 
-| Command     | What it does                                                    |
-| ----------- | --------------------------------------------------------------- |
-| `/help`     | list all commands                                               |
-| `/mode`     | switch between agent, chat, plan                                |
-| `/init`     | generate a `MILO.md` for your project                           |
-| `/provider` | manage AI providers                                             |
-| `/pet`      | check milo's stats                                              |
-| `/feed`     | feed milo 🍖                                                    |
-| `/roast`    | milo roasts your codebase. brutally. _(unlocks at level 3)_     |
-| `/vibe`     | vibe check on your project _(unlocks at level 5)_               |
-| `/crimes`   | milo files a rap sheet on your codebase _(unlocks at level 10)_ |
-| `/clear`    | clear the conversation                                          |
-| `/genz`     | you don't want to know                                          |
+| Command          | What it does                                                    |
+| ---------------- | --------------------------------------------------------------- |
+| `/help`          | list all commands                                               |
+| `/mode`          | switch between agent, chat, plan                                |
+| `/init`          | generate a `MILO.md` for your project                           |
+| `/provider`      | manage AI providers                                             |
+| `/pet`           | check milo's stats                                              |
+| `/feed`          | feed milo 🍖                                                    |
+| `/roast`         | milo roasts your codebase. brutally. _(unlocks at level 3)_     |
+| `/vibe`          | vibe check on your project _(unlocks at level 5)_               |
+| `/crimes`        | milo files a rap sheet on your codebase _(unlocks at level 10)_ |
+| `/clear`         | clear the conversation                                          |
+| `/genz`          | you don't want to know                                          |
+| `/login`         | sign in to earn purr-coins and appear on the leaderboard        |
+| `/logout`        | sign out                                                        |
+| `/whoami`        | check your login status and purr-coin balance                   |
+| `/achievements`  | browse your achievements and purr-coins _(alias: `/ach`)_       |
+| `/leaderboard`   | see who's winning _(alias: `/lb`)_                              |
 
 ---
 
@@ -119,6 +124,35 @@ Milo has a pet system. every tool call earns XP. level up to unlock commands and
 | legendary | 15+    | feared by dogs 👑       |
 
 milo gets hungry over time. run `/feed` or it gets sad.
+
+---
+
+## Purr-coins & Achievements
+
+Milo has a gamification system. sign in with `/login` to activate it.
+
+**Earn purr-coins ($) by:**
+- using tools (+1 per tool call)
+- leveling up (level × 2 + current balance)
+- feeding milo (+2)
+- logging in daily (+5)
+- keeping a streak (+streak × 2)
+
+**Achievements:**
+
+| Achievement         | How to unlock                    | Reward  |
+| ------------------- | -------------------------------- | ------- |
+| First Meow 🐱       | run milo for the first time      | $10     |
+| Show Up Era 📅      | use milo daily                   | $5      |
+| No Life szn 💀      | run 100 commands                 | $20     |
+| Midnight Menace 🌙  | use milo after midnight          | $15     |
+| Chronically Online 🤖 | send 10 AI messages            | $10     |
+| Main Character 👑   | 7-day streak                     | $100    |
+| Good Human 🍣       | feed milo                        | $5      |
+| Paws Up 🐾          | reach level 5                    | $75     |
+| Absolute Unit 😤    | reach level 10                   | $150    |
+
+coins and achievements are stored securely — no cheating 😼
 
 ---
 
