@@ -1,7 +1,12 @@
 import { program } from "commander";
 import { serve } from "./server/serve";
 
-program.name("milo").description("tiny cat. big code.").version("0.3.0");
+const version = "v0.6.6";
+
+program
+  .name("milo")
+  .description("tiny cat. big code.")
+  .version(version, "-v, --version", "display current version");
 
 program
   .command("serve")
