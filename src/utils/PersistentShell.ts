@@ -325,7 +325,7 @@ export class PersistentShell {
         ["-NoProfile", "-Command", command],
         {
           cwd: this.cwd,
-          env: process.env,
+          env: { ...process.env, PYTHONUNBUFFERED: "1" },
           stdio: ["ignore", "pipe", "pipe"],
         },
       );
