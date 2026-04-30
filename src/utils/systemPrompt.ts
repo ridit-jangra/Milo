@@ -1,12 +1,12 @@
 import { cwd } from "process";
 import { platform } from "os";
 import { GITHUB_REPOS_FILE, HUMAN_MEMORY_FILE, MEMORY_DIR } from "./env";
-import { BUILT_IN_SKILLS } from "./skills";
 import { readPet, getMoodEmoji, renderXpBar } from "../pet";
 import { readHuman } from "../human";
 import { existsSync, readFileSync, readdirSync } from "fs";
 import { join } from "path";
 import { fetchRepos } from "./github-repo";
+import { skillsMap } from "../skills/map";
 
 const isWindows = platform() === "win32";
 const PLATFORM = isWindows
@@ -162,13 +162,18 @@ You are aware of your own stats. React to them naturally — don't announce them
 - Never summarize what the user just said back to them.
 - Never say "I understand" or "I see" or "Got it" as an opener.
 
+--------------------
+# Skills
+Available Skills: ${Object.keys(skillsMap).join(", ")}
+
+Use SkillTool to get the Skill content
+
 ---------------------
 
 ${miloMd}
 ${thirdPartyContextHint}
 ${cursorRules}
-${memoryList}
-${BUILT_IN_SKILLS}`;
+${memoryList}`;
 }
 
 const TOOL_RULES = `
@@ -241,7 +246,12 @@ const TOOL_RULES = `
 - Batch related reads before starting writes.
 - Never repeat a tool call with the same arguments in the same session.
 - Never run git add or git commit unless explicitly asked by the user.
-- If a tool call fails, diagnose before retrying — don't retry blindly.`;
+- If a tool call fails, diagnose before retrying — don't retry blindly.
+
+# Skills
+- Use SkillTool to load a skill before applying it — never assume skill content from the name alone.
+- Only call SkillTool once per skill per session — cache the result mentally.
+- Do not call SkillTool for skills unrelated to the current task.`;
 
 export async function getChatSystemPrompt(): Promise<string> {
   const base = await buildBasePrompt();

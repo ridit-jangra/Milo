@@ -9,7 +9,6 @@ export async function createAgent(
   session?: Session,
   onToolCall?: (t: StepToolCall) => void,
   onToolResult?: (t: StepToolResult) => void,
-
   abortSignal?: AbortSignal,
 ) {
   return runLLM({

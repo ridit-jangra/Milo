@@ -46,6 +46,8 @@ function getAction(toolName: string, input: unknown): string {
       return `memory edit`;
     case "ThinkTool":
       return `think`;
+    case "SkillTool":
+      return `skill · ${String((a as any).name)}`;
     case "AgentTool":
       return `agent · ${String((a as any).task ?? (a as any).subtask ?? "").slice(0, 50)}`;
     case "OrchestratorTool":

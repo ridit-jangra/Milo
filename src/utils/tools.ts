@@ -14,6 +14,7 @@ import { WebFetchTool } from "../tools/WebFetchTool/tool";
 import { WebSearchTool } from "../tools/WebSearchTool/tool";
 import { DownloadTool } from "../tools/DownloadTool/tool";
 import { HumanEditTool } from "../tools/HumanEditTool/tool";
+import { SkillTool } from "../tools/SkillTool/tool";
 
 export const agentTools = {
   FileReadTool,
@@ -32,17 +33,7 @@ export const agentTools = {
   WebSearchTool,
   DownloadTool,
   HumanEditTool,
-};
-
-export const orchestratorAgentTools = {
-  FileReadTool,
-  FileWriteTool,
-  FileEditTool,
-  BashTool,
-  GrepTool,
-  GlobTool,
-  ThinkTool,
-  DownloadTool,
+  SkillTool,
 };
 
 export const subagentTools = {
@@ -53,8 +44,8 @@ export const subagentTools = {
   GrepTool,
   GlobTool,
   ThinkTool,
-
   DownloadTool,
+  SkillTool,
 };
 
 export const chatTools = {
@@ -65,13 +56,5 @@ export const chatTools = {
   WebFetchTool,
   WebSearchTool,
   HumanEditTool,
-};
-
-export const connectorTools = {
-  FileReadTool,
-  GrepTool,
-  GlobTool,
-  BashTool,
-  ThinkTool,
-  DownloadTool,
+  SkillTool,
 };
