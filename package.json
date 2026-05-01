@@ -18,6 +18,8 @@
     "build": "npm run lint && bun build src/index.tsx --target node --outfile dist/index.mjs --external react-devtools-core --external ink --external react --external chalk --external commander --external figures --external ink-spinner",
     "postbuild": "node -e \"const fs=require('fs');const f='dist/index.mjs';fs.writeFileSync(f,'#!/usr/bin/env node\\n'+fs.readFileSync(f,'utf8'))\"",
     "release": "node scripts/release.js",
+    "release:minor": "node scripts/release.js minor",
+    "release:major": "node scripts/release.js major",
     "prepublishOnly": "npm run build",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",

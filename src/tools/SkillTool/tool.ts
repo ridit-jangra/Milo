@@ -14,9 +14,9 @@ export const SkillTool = tool({
       ),
   }),
   execute: async ({ name }) => {
-    const content = skillsMap[name];
+    const skill = skillsMap[name];
 
-    if (!content) {
+    if (!skill) {
       const available = Object.keys(skillsMap);
       return {
         success: false,
@@ -28,7 +28,7 @@ export const SkillTool = tool({
     return {
       success: true,
       name,
-      content,
+      content: skill.content,
     };
   },
 });

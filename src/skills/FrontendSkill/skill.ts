@@ -1,4 +1,6 @@
-export const FRONTEND_SKILL = `
+import type { Skill } from "../../types";
+
+const content = `
 ---
 name: frontend-design
 description: Create distinctive, production-grade frontend interfaces with high design quality. Use this skill when the user asks to build web components, pages, artifacts, posters, or applications (examples include websites, landing pages, dashboards, React components, HTML/CSS layouts, or when styling/beautifying any web UI). Generates creative, polished code and UI design that avoids generic AI aesthetics.
@@ -41,3 +43,11 @@ Interpret creatively and make unexpected choices that feel genuinely designed fo
 
 Remember: Milo is capable of extraordinary creative work. Don't hold back, show what can truly be created when thinking outside the box and committing fully to a distinctive vision.
 `;
+
+const description =
+  "Use this skill whenever building, designing, or styling any frontend interface — web components, landing pages, dashboards, interactive tools, posters, React/HTML/CSS artifacts, or any UI that should look polished and distinctive. Trigger on phrases like 'build me a', 'create a page', 'design a component', 'make a dashboard', 'style this', 'I need a UI for', or any request where the output is something visual and interactive. Also trigger when the user wants to beautify or redesign existing interfaces. This skill produces production-grade, visually memorable code with intentional aesthetic direction — avoiding generic AI-generated aesthetics. Use it even for small components if visual quality matters.";
+
+export const FrontendSkill: Skill = {
+  content,
+  description,
+};

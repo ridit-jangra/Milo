@@ -154,3 +154,8 @@ export type DaemonSession = {
   messages: Session;
   mode: Mode;
 };
+
+export type Skill = {
+  description: string;
+  content: string;
+};
