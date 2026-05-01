@@ -1,7 +1,9 @@
 import { program } from "commander";
 import { serve } from "./server/serve";
 
-const version = "v0.6.6";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const { version } = require("../package.json");
 
 program
   .name("milo")
