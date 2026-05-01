@@ -13,3 +13,4 @@ tsconfig.json
 .prettierignore
 .prettierrc
 eslint.config.js
+.env
