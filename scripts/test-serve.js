@@ -1,3 +1,5 @@
+// WRITTEN BY CLAUDE
+
 const BASE = "http://localhost:6969";
 
 function log(tag, msg) {
@@ -7,7 +9,11 @@ function log(tag, msg) {
 
 async function json(res) {
   const text = await res.text();
-  try { return JSON.parse(text); } catch { return text; }
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
 }
 
 // Read an SSE stream line by line, calling onEvent for each parsed data line.
@@ -72,7 +78,10 @@ async function chat(sessionId, prompt, { autoAllow = false } = {}) {
           );
           log("permission", `resolved → ${pr.status}`);
         } else {
-          log("permission", `waiting — resolve manually: POST /sessions/${sessionId}/permissions/${event.id}`);
+          log(
+            "permission",
+            `waiting — resolve manually: POST /sessions/${sessionId}/permissions/${event.id}`,
+          );
         }
         break;
 
@@ -154,7 +163,10 @@ async function run() {
   // so this test relies on autoAllow=false logging the permId — in a real
   // client you'd parse it from the SSE stream. Here we just let it time out
   // to show the hang scenario; press Ctrl+C or resolve manually.
-  log("deny-test", "send: POST /sessions/:id/permissions/:permId with {allow:false} to resolve");
+  log(
+    "deny-test",
+    "send: POST /sessions/:id/permissions/:permId with {allow:false} to resolve",
+  );
 
   await chatPromise;
 
