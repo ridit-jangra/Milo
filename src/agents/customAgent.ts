@@ -3,84 +3,13 @@
 /* eslint-disable */
 
 import { getSwarmAgentSystemPrompt } from "../utils/systemPrompt";
-import { createSession, saveSession, type Session } from "../utils/session";
+import { type Session } from "../utils/session";
 import type { agentTools } from "../utils/tools";
 import { resolveTools } from "../utils/resolve";
 import { resolvePermission } from "../permissions";
 import { sharedMemory } from "./memory/sharedMemory";
 import { TalkTool } from "../tools/TalkTool/tool";
-import { generateText, stepCountIs } from "ai";
-import { getModel } from "../utils/model";
-import type { LLMOptions } from "../types";
-import { repairJSON } from "../utils/json";
-
-export async function runLLM({
-  system,
-  tools,
-  prompt,
-  mode = "agent",
-  onToolCall,
-  onToolResult,
-  abortSignal,
-}: LLMOptions): Promise<{ text: string; session: Session }> {
-  const activeSession = createSession();
-
-  const messagesBeforePrompt = [...activeSession.messages];
-  activeSession.messages.push({ role: "user", content: prompt });
-
-  const { model } = await getModel();
-
-  const stepLimits: Record<string, number> = {
-    chat: 30,
-    agent: 150,
-    build: 200,
-    orchestratorAgent: 50,
-    subagent: 50,
-  };
-
-  const result = await generateText({
-    model,
-    system: system,
-    messages: activeSession.messages,
-    stopWhen: stepCountIs(stepLimits[mode] ?? 100),
-    tools,
-    abortSignal,
-    experimental_repairToolCall: async ({ toolCall }) => {
-      const repaired = repairJSON(toolCall.input as string);
-      if (repaired === null) return null;
-      return { ...toolCall, input: JSON.parse(repaired) };
-    },
-    onStepFinish: ({ toolCalls, toolResults }) => {
-      for (const toolCall of toolCalls ?? []) {
-        onToolCall?.({
-          id: toolCall.toolCallId,
-          toolName: toolCall.toolName,
-          input: toolCall.input,
-        });
-      }
-      for (const toolResult of toolResults ?? []) {
-        const toolCall = toolCalls?.find(
-          (t) => t.toolCallId === toolResult.toolCallId,
-        );
-        onToolResult?.({
-          id: toolResult.toolCallId,
-          toolName: toolResult.toolName,
-          input: toolCall?.input,
-          output: toolResult.output,
-        });
-      }
-    },
-  });
-
-  activeSession.messages = [
-    ...messagesBeforePrompt,
-    { role: "user", content: prompt },
-    ...result.response.messages,
-  ];
-
-  saveSession(activeSession);
-  return { text: result.text, session: activeSession };
-}
+import { buildProvider, runLLM } from "@ridit/ai/ai";
 
 export const agentsMap = new Map<string, CustomAgent>();
 
@@ -107,13 +36,21 @@ export class CustomAgent {
       TalkTool,
     };
 
+    const provider = buildProvider({
+      model: "openai/gpt-oss-20b",
+      provider: "groq",
+      apiKey: process.env.GROQ_API_KEY!,
+    });
+
     const response = await runLLM({
       system: `${await getSwarmAgentSystemPrompt(this.name, [
         ...agentsMap.keys(),
       ])}`,
       prompt: prompt,
-      mode: "agent",
+      // mode: "agent",
+      provider: provider,
       tools: resolved,
+      // tools: resolved,
       onToolCall: (t) => {
         if (t.toolName === "TalkTool") {
           console.log(
@@ -137,6 +74,8 @@ export class CustomAgent {
     resolvePermission("allow_session");
 
     this.session = response.session;
+
+    console.log(`\n🤖 [${this.name}] → Response: ${response.text}`);
 
     return response;
   }
