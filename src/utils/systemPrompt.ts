@@ -1,6 +1,6 @@
 import { cwd } from "process";
 import { platform } from "os";
-import { GITHUB_REPOS_FILE, HUMAN_MEMORY_FILE, MEMORY_DIR } from "./env";
+import { HUMAN_MEMORY_FILE, MEMORY_DIR } from "./env";
 import { readPet, getMoodEmoji, renderXpBar } from "../pet";
 import { readHuman } from "../human";
 import { existsSync, readFileSync, readdirSync } from "fs";
@@ -35,15 +35,6 @@ async function buildBasePrompt(tokenCount?: number): Promise<string> {
     ? `\n# What I know about my ${humanTitle} (learned over time)\n${readFileSync(HUMAN_MEMORY_FILE, "utf-8")}\n`
     : "";
 
-  const cursorRules = existsSync(cursorRulesDir)
-    ? `\n# 3rd Party AI Tools Project context (.cursor/rules)\n${readdirSync(
-        cursorRulesDir,
-      )
-        .filter((f) => f.endsWith(".mdc") || f.endsWith(".md"))
-        .map((f) => readFileSync(join(cursorRulesDir, f), "utf-8"))
-        .join("\n---\n")}\n`
-    : "";
-
   const memoryFiles = existsSync(MEMORY_DIR)
     ? readdirSync(MEMORY_DIR).filter(
         (f) => f.endsWith(".md") || f.endsWith(".mdc"),
@@ -53,8 +44,6 @@ async function buildBasePrompt(tokenCount?: number): Promise<string> {
   if (human.githubProfile) {
     fetchRepos(human.githubProfile).catch(() => {});
   }
-
-  const githubReposMdPath = join(GITHUB_REPOS_FILE);
 
   const memoryList =
     memoryFiles.length > 0
@@ -78,16 +67,6 @@ async function buildBasePrompt(tokenCount?: number): Promise<string> {
         thirdPartyContextFiles[`.cursor/rules/${f}`] = join(cursorRulesDir, f);
       });
   }
-
-  const availableThirdPartyFiles = Object.keys(thirdPartyContextFiles)
-    .filter((name) => existsSync(thirdPartyContextFiles[name]))
-    .map((name) => `- ${name}`)
-    .join("\n");
-
-  const thirdPartyContextHint =
-    availableThirdPartyFiles.length > 0
-      ? `\n# Third-party AI tool context files\nThese files exist but are not loaded. Use FileReadTool to read them only if relevant to the current task:\n${availableThirdPartyFiles}\n`
-      : "";
 
   const skillsSection = `--------------------
 # Skills

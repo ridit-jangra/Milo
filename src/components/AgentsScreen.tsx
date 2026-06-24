@@ -4,7 +4,7 @@ import InkSpinner from "ink-spinner";
 import { getTheme } from "../utils/theme";
 import { useTerminalSize } from "../hooks/useTerminalSize";
 import { Message } from "./Message";
-import { tick, cross, line, pointer } from "../icons";
+import { tick, cross, line, pointer, upDownArrow } from "../icons";
 import type { Agent } from "../types";
 
 type Props = {
@@ -42,7 +42,7 @@ export function AgentsScreen({ agents, onClose }: Props): React.ReactNode {
   });
 
   const maxMessages = Math.max(2, Math.floor((rows - 8) / 2));
-  const messages = active?.messages ?? [];
+  const messages = (active as any)?.messages ?? [];
   const hidden = Math.max(0, messages.length - maxMessages);
   const visible = messages.slice(hidden);
 
@@ -98,7 +98,7 @@ export function AgentsScreen({ agents, onClose }: Props): React.ReactNode {
                 … {hidden} earlier message{hidden === 1 ? "" : "s"} hidden
               </Text>
             )}
-            {visible.map((msg, i) => (
+            {visible.map((msg: any, i: number) => (
               <Message
                 key={msg.id}
                 msg={msg}
@@ -112,7 +112,7 @@ export function AgentsScreen({ agents, onClose }: Props): React.ReactNode {
       <Text color={theme.secondaryBorder}>{line.repeat(columns)}</Text>
       <Box paddingX={1}>
         <Text color={theme.secondaryText} dimColor>
-          ↑↓ select agent · esc / ctrl+x back to chat
+          {upDownArrow} select agent · esc / ctrl+x back to chat
         </Text>
       </Box>
     </Box>
