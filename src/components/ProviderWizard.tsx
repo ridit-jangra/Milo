@@ -28,6 +28,7 @@ const PROVIDERS: ProviderType[] = [
   "openrouter",
   "hackclub",
   "google",
+  "openai-compatible",
 ];
 
 const FIELDS = ["name", "provider", "model", "apiKey", "baseURL"] as const;

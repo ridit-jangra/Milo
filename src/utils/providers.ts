@@ -8,6 +8,7 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOllama } from "ai-sdk-ollama";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import type { LanguageModel } from "ai";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
 export type ProviderType =
   | "groq"
@@ -16,7 +17,8 @@ export type ProviderType =
   | "ollama"
   | "openrouter"
   | "hackclub"
-  | "google";
+  | "google"
+  | "openai-compatible";
 
 export type ProviderConfig = {
   name: string;
@@ -205,6 +207,24 @@ export function buildProvider(config: ProviderConfig): LanguageModel {
           `OpenRouter connection failed: ${(error as unknown as { message: string }).message}`,
           { cause: error },
         );
+      }
+    case "openai-compatible":
+      if (!config.apiKey) {
+        throw new Error(
+          "OpenAI API key missing. Use `/providers` to set credentials.",
+          { cause: "No apiKey found" },
+        );
+      }
+      try {
+        return createOpenAICompatible({
+          apiKey: config.apiKey,
+          baseURL: config.baseURL || "",
+          name: config.name,
+        })(config.model);
+      } catch (error) {
+        throw new Error(`OpenAI connection failed: ${(error as any).message}`, {
+          cause: error,
+        });
       }
   }
 }

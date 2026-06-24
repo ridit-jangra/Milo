@@ -15,7 +15,7 @@ import {
   CommandSuggestions,
   getMatchingCommands,
 } from "../components/CommandSuggestions";
-import type { ChatMessage } from "../types";
+import type { Agent, ChatMessage } from "../types";
 import { StatusBar } from "../components/StatusBar";
 import { findShortcut } from "../shortcuts";
 import { PermissionCard } from "../components/permissions/PermissionCard";
@@ -24,6 +24,15 @@ import { isBootstrap, markBootstrapDone } from "../utils/bootstrap";
 import { BootstrapWizard } from "../components/BootstrapWizard";
 import { HighlightedCode } from "../components/HighlightedCode";
 import { PersistentShell } from "../utils/PersistentShell";
+import { agentStream } from "../utils/agentStream";
+import type {
+  AgentStartEvent,
+  AgentActivityEvent,
+  AgentToolCallEvent,
+  AgentToolResultEvent,
+  AgentDoneEvent,
+} from "../utils/agentStream";
+import { AgentsScreen } from "../components/AgentsScreen";
 
 const MAX_RENDERED_LINES = 20;
 
@@ -57,6 +66,8 @@ export default function REPL(): JSX.Element {
   const [elapsed, setElapsed] = useState<number>(0);
   const [modelLabel, setModelLabel] = useState("no model");
   const [bootstrap, setBootstrap] = useState(isBootstrap());
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [showAgents, setShowAgents] = useState(false);
   const [liveOutput, setLiveOutput] = useState<string>("");
   const [liveCommand, setLiveCommand] = useState<string>("");
   const [petLevel] = useState(INITIAL_PET_LEVEL);
@@ -75,7 +86,12 @@ export default function REPL(): JSX.Element {
     abort,
   } = useChat();
 
-  useInput((_, key) => {
+  useInput((input, key) => {
+    if (key.ctrl && (input === "x" || input === "\x18")) {
+      setShowAgents((s) => !s);
+      return;
+    }
+    if (showAgents) return;
     if (key.escape) {
       abort();
       setLiveOutput("");
@@ -117,6 +133,103 @@ export default function REPL(): JSX.Element {
       shellStream.off("command", onCommand);
       shellStream.off("chunk", onChunk);
       shellStream.off("done", onDone);
+    };
+  }, []);
+
+  useEffect(() => {
+    const onStart = ({
+      id,
+      task,
+      prompt,
+    }: AgentStartEvent) => {
+      setAgents((prev) => [
+        ...prev,
+        {
+          id,
+          task,
+          status: "running",
+          startedAt: Date.now(),
+          messages: [{ id: `${id}-prompt`, type: "user", text: prompt }],
+        },
+      ]);
+    };
+    const onActivity = ({ id, activity }: AgentActivityEvent) => {
+      setAgents((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, activity } : a)),
+      );
+    };
+    const onToolCall = ({ id, call }: AgentToolCallEvent) => {
+      setAgents((prev) =>
+        prev.map((a) =>
+          a.id === id
+            ? {
+                ...a,
+                messages: [
+                  ...a.messages,
+                  {
+                    id: call.id,
+                    type: "tool_call",
+                    toolName: call.toolName,
+                    input: call.input,
+                  },
+                ],
+              }
+            : a,
+        ),
+      );
+    };
+    const onToolResult = ({ id, result }: AgentToolResultEvent) => {
+      setAgents((prev) =>
+        prev.map((a) =>
+          a.id === id
+            ? {
+                ...a,
+                messages: a.messages.map((m) =>
+                  m.id === result.id
+                    ? {
+                        id: result.id,
+                        type: "tool_result",
+                        toolName: result.toolName,
+                        input: m.type === "tool_call" ? m.input : result.input,
+                        output: result.output,
+                        success: true,
+                      }
+                    : m,
+                ),
+              }
+            : a,
+        ),
+      );
+    };
+    const onDone = ({ id, success, text }: AgentDoneEvent) => {
+      setAgents((prev) =>
+        prev.map((a) =>
+          a.id === id
+            ? {
+                ...a,
+                status: success ? "done" : "error",
+                activity: undefined,
+                messages: [
+                  ...a.messages,
+                  { id: `${id}-result`, type: "assistant", text },
+                ],
+              }
+            : a,
+        ),
+      );
+    };
+
+    agentStream.on("start", onStart);
+    agentStream.on("activity", onActivity);
+    agentStream.on("tool_call", onToolCall);
+    agentStream.on("tool_result", onToolResult);
+    agentStream.on("done", onDone);
+    return () => {
+      agentStream.off("start", onStart);
+      agentStream.off("activity", onActivity);
+      agentStream.off("tool_call", onToolCall);
+      agentStream.off("tool_result", onToolResult);
+      agentStream.off("done", onDone);
     };
   }, []);
 
@@ -210,7 +323,7 @@ export default function REPL(): JSX.Element {
         shortcut.action({ clearMessages, mode, setMode });
       }
     },
-    { isActive: !loading },
+    { isActive: !loading && !showAgents },
   );
 
   const subagentByTask = messages.reduce<Record<string, SubtoolMessage[]>>(
@@ -274,6 +387,10 @@ export default function REPL(): JSX.Element {
     },
     [headerItem],
   );
+
+  if (showAgents) {
+    return <AgentsScreen agents={agents} onClose={() => setShowAgents(false)} />;
+  }
 
   return (
     <Box flexDirection="column" height="100%">
@@ -367,6 +484,15 @@ export default function REPL(): JSX.Element {
         </Box>
       )}
 
+      {agents.some((a) => a.status === "running") && (
+        <Box marginTop={1}>
+          <Text color={getTheme().secondaryText} dimColor>
+            {agents.filter((a) => a.status === "running").length} agent(s)
+            running · ctrl+x to view
+          </Text>
+        </Box>
+      )}
+
       <Box minHeight={2}>{loading && <Spinner />}</Box>
 
       <Box flexDirection="column">
@@ -416,6 +542,7 @@ export default function REPL(): JSX.Element {
             </Box>
           )}
         </Box>
+
         <Text color={getTheme().secondaryBorder}>{line.repeat(columns)}</Text>
         <CommandSuggestions query={value} selectedIndex={selectedIndex} />
         <StatusBar model={modelLabel} mode={mode} thinking={loading} />

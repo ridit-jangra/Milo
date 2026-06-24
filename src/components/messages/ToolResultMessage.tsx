@@ -49,7 +49,7 @@ function getAction(toolName: string, input: unknown): string {
     case "SkillTool":
       return `skill · ${String((a as any).name)}`;
     case "AgentTool":
-      return `agent · ${String((a as any).task ?? (a as any).subtask ?? "").slice(0, 50)}`;
+      return `agent · ${String((a as any).prompt).slice(0, 100)}`;
     case "OrchestratorTool":
       return `orchestrate · ${String((a as any).goal ?? "")}`;
     default:

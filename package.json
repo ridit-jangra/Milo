@@ -50,6 +50,7 @@
     "@ai-sdk/google": "^3.0.57",
     "@ai-sdk/groq": "^3.0.33",
     "@ai-sdk/openai": "^3.0.50",
+    "@ai-sdk/openai-compatible": "^2.0.47",
     "@openrouter/ai-sdk-provider": "^2.5.0",
     "@ridit/ai": "^0.1.84",
     "@supabase/supabase-js": "^2.104.1",

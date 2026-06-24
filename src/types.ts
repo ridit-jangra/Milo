@@ -159,3 +159,12 @@ export type Skill = {
   description: string;
   content: string;
 };
+
+export interface Agent {
+  id: string;
+  task: string;
+  status: "running" | "done" | "error";
+  activity?: string;
+  startedAt: number;
+  messages: ChatMessage[];
+}
