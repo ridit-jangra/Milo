@@ -5,7 +5,7 @@ import { createRequire } from "module";
 import type { StepToolCall, StepToolResult } from "../types";
 
 const require = createRequire(import.meta.url);
-const { version } = require("../../package.json");
+const { version } = require("../package.json");
 
 export async function mcp() {
   for (const level of ["log", "info", "warn", "error", "debug"] as const) {
