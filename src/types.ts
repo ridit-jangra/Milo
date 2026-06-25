@@ -76,6 +76,7 @@ export type LLMOptions = {
   mode?: "chat" | "agent" | "build" | "subagent" | "orchestratorAgent";
   onToolCall?: (toolCall: StepToolCall) => void;
   onToolResult?: (toolResult: StepToolResult) => void;
+  onText?: (delta: string) => void;
   abortSignal?: AbortSignal;
 };
 

@@ -1,4 +1,4 @@
-import { generateText, stepCountIs } from "ai";
+import { generateText, streamText, stepCountIs } from "ai";
 import { getModel } from "./model";
 import {
   type Session,
@@ -23,6 +23,7 @@ export async function runLLM({
   mode = "agent",
   onToolCall,
   onToolResult,
+  onText,
   abortSignal,
 }: LLMOptions): Promise<{ text: string; session: Session }> {
   const activeSession = session ?? createSession();
@@ -60,49 +61,84 @@ export async function runLLM({
     subagent: 50,
   };
 
-  const result = await generateText({
-    model,
-    system:
-      system +
-      `\n\n# Context usage\nTokens used so far: ~${tokenCount}. If this exceeds ${COMPACTION_THRESHOLD}, call CompactTool immediately.` +
-      toolReminder,
-    messages: activeSession.messages,
-    stopWhen: stepCountIs(stepLimits[mode] ?? 100),
-    tools,
-    abortSignal,
-    experimental_repairToolCall: async ({ toolCall }) => {
-      const repaired = repairJSON(toolCall.input as string);
-      if (repaired === null) return null;
-      return { ...toolCall, input: JSON.parse(repaired) };
-    },
-    onStepFinish: ({ toolCalls, toolResults }) => {
-      for (const toolCall of toolCalls ?? []) {
-        onToolCall?.({
-          id: toolCall.toolCallId,
-          toolName: toolCall.toolName,
-          input: toolCall.input,
-        });
-      }
-      for (const toolResult of toolResults ?? []) {
-        const toolCall = toolCalls?.find(
-          (t) => t.toolCallId === toolResult.toolCallId,
-        );
-        onToolResult?.({
-          id: toolResult.toolCallId,
-          toolName: toolResult.toolName,
-          input: toolCall?.input,
-          output: toolResult.output,
-        });
-      }
-    },
-  });
+  const finalSystem =
+    system +
+    `\n\n# Context usage\nTokens used so far: ~${tokenCount}. If this exceeds ${COMPACTION_THRESHOLD}, call CompactTool immediately.` +
+    toolReminder;
+  const stopWhen = stepCountIs(stepLimits[mode] ?? 100);
+  const repairToolCall: Parameters<
+    typeof generateText
+  >[0]["experimental_repairToolCall"] = async ({ toolCall }) => {
+    const repaired = repairJSON(toolCall.input as string);
+    if (repaired === null) return null;
+    return { ...toolCall, input: JSON.parse(repaired) };
+  };
+  const handleStep = ({
+    toolCalls,
+    toolResults,
+  }: {
+    toolCalls: { toolCallId: string; toolName: string; input: unknown }[];
+    toolResults: { toolCallId: string; toolName: string; output: unknown }[];
+  }) => {
+    for (const toolCall of toolCalls ?? []) {
+      onToolCall?.({
+        id: toolCall.toolCallId,
+        toolName: toolCall.toolName,
+        input: toolCall.input,
+      });
+    }
+    for (const toolResult of toolResults ?? []) {
+      const toolCall = toolCalls?.find(
+        (t) => t.toolCallId === toolResult.toolCallId,
+      );
+      onToolResult?.({
+        id: toolResult.toolCallId,
+        toolName: toolResult.toolName,
+        input: toolCall?.input,
+        output: toolResult.output,
+      });
+    }
+  };
+
+  let text: string;
+  let responseMessages;
+
+  if (onText) {
+    // Streaming path: pump text deltas live, then resolve the final result.
+    const result = streamText({
+      model,
+      system: finalSystem,
+      messages: activeSession.messages,
+      stopWhen,
+      tools,
+      abortSignal,
+      experimental_repairToolCall: repairToolCall,
+      onStepFinish: handleStep,
+    });
+    for await (const delta of result.textStream) onText(delta);
+    text = await result.text;
+    responseMessages = (await result.response).messages;
+  } else {
+    const result = await generateText({
+      model,
+      system: finalSystem,
+      messages: activeSession.messages,
+      stopWhen,
+      tools,
+      abortSignal,
+      experimental_repairToolCall: repairToolCall,
+      onStepFinish: handleStep,
+    });
+    text = result.text;
+    responseMessages = result.response.messages;
+  }
 
   activeSession.messages = [
     ...messagesBeforePrompt,
     { role: "user", content: prompt },
-    ...result.response.messages,
+    ...responseMessages,
   ];
 
   saveSession(activeSession);
-  return { text: result.text, session: activeSession };
+  return { text, session: activeSession };
 }

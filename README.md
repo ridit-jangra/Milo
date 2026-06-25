@@ -192,25 +192,30 @@ Try it for yourself and you won't go back.
 
 # For Devs
 
-## Daemon mode
+## MCP server
 
-Milo can run as a background HTTP daemon — useful for Meridia, Echo, or any tool that wants to talk to Milo programmatically — or use [@ridit/dev](https://npmjs.com/package/@ridit/dev) for a typed SDK wrapper.
+Milo can run as an [MCP](https://modelcontextprotocol.io) server over stdio, so other apps — Claude Code, Cursor, Windsurf, or anything that speaks MCP — can connect and delegate coding tasks to Milo.
 
 ```bash
-milo serve        # start daemon on port 6969
-milo status       # check if running
-milo kill         # stop daemon
+milo mcp          # run Milo as an MCP server (stdio)
 ```
 
-Sessions and chat are available over HTTP:
+Point any MCP client at it:
 
+```json
+{
+  "mcpServers": {
+    "milo": { "command": "milo", "args": ["mcp"] }
+  }
+}
 ```
-POST   /sessions                         create a session
-GET    /sessions                         list sessions
-DELETE /sessions/:id                     delete a session
-POST   /sessions/:id/chat                send a message (SSE stream)
-POST   /sessions/:id/permissions/:permId resolve a permission request
-```
+
+It exposes two tools:
+
+| Tool         | Description                                                                                  |
+| ------------ | -------------------------------------------------------------------------------------------- |
+| `ask_milo`   | Run a coding task with Milo's full agent. Pass `sessionId` to continue a prior conversation; the returned `sessionId` can be reused. Streams tool activity as progress notifications. |
+| `reset_milo` | Clear the default session and start fresh.                                                   |
 
 ---
 

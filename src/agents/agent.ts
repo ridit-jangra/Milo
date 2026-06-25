@@ -10,6 +10,7 @@ export async function createAgent(
   onToolCall?: (t: StepToolCall) => void,
   onToolResult?: (t: StepToolResult) => void,
   abortSignal?: AbortSignal,
+  onText?: (delta: string) => void,
 ) {
   return runLLM({
     system: await getAgentSystemPrompt(),
@@ -19,6 +20,7 @@ export async function createAgent(
     tools: agentTools,
     onToolCall,
     onToolResult,
+    onText,
     abortSignal,
   });
 }
